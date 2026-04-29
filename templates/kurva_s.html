@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kurva S - Cetak Sawah</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-slate-50 text-slate-800 font-inter antialiased">
+    <div class="flex h-screen overflow-hidden">
+        
+        <!-- Sidebar -->
+        <aside class="w-64 bg-slate-900 text-white flex flex-col transition-all duration-300 shadow-2xl z-20">
+            <div class="p-5 flex flex-col items-center justify-center border-b border-slate-800 text-center gap-3">
+                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" class="w-12 h-12 object-contain" onerror="this.style.display='none'">
+                <h1 class="text-[11px] font-bold tracking-wider leading-snug">
+                    BALAI PENGELOLAAN LAHAN IRIGASI PERTANIAN<br><span class="text-green-400 text-[10px] mt-1 inline-block">KELAS 1 MAKASSAR</span>
+                </h1>
+            </div>
+            <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto custom-scrollbar" id="sidebar-nav">
+                <a href="{{ url_for('index') }}" class="flex items-center px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition">
+                    <i class="fa-solid fa-chart-pie w-6"></i>
+                    <span class="font-semibold ml-3">Dashboard</span>
+                </a>
+                <a href="{{ url_for('peta') }}" class="flex items-center px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition">
+                    <i class="fa-solid fa-map-location-dot w-6"></i>
+                    <span class="font-semibold ml-3">Peta Lokasi</span>
+                </a>
+                
+                <!-- Laporan Section with Dropdown -->
+                <div class="relative">
+                    <!-- Set open by default if it's the active section -->
+                    <button type="button" onclick="toggleDropdown('dropdown-laporan')" class="w-full flex items-center justify-between px-4 py-3 bg-slate-800 text-white rounded-xl transition focus:outline-none">
+                        <div class="flex items-center">
+                            <i class="fa-solid fa-clipboard-list w-6 text-left text-indigo-400"></i>
+                            <span class="font-semibold ml-3">Laporan</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300 rotate-180" id="icon-dropdown-laporan"></i>
+                    </button>
+                    
+                    <div id="dropdown-laporan" class="flex flex-col pl-12 pr-4 py-2 space-y-3">
+                        <!-- A. Sulawesi Selatan -->
+                        <div>
+                            <!-- Assuming Sulsel is active if paket starts with sulsel -->
+                            <button type="button" onclick="toggleDropdown('dropdown-sulsel', event)" class="w-full flex items-center justify-between py-1 text-sm font-medium {% if paket.startswith('sulsel') %}text-white{% else %}text-slate-300{% endif %} hover:text-white transition focus:outline-none">
+                                <span>A. Sulawesi Selatan</span>
+                                <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-300 {% if paket.startswith('sulsel') %}rotate-180{% endif %}" id="icon-dropdown-sulsel"></i>
+                            </button>
+                            <div id="dropdown-sulsel" class="{% if paket.startswith('sulsel') %}flex{% else %}hidden{% endif %} flex-col pl-4 mt-2 space-y-2 border-l border-slate-700/50">
+                                {% for i in range(1, 25) %}
+                                <div>
+                                    <button type="button" onclick="toggleDropdown('dropdown-sulsel-{{i}}', event)" class="w-full flex items-center justify-between py-1 text-xs {% if paket == 'sulsel_'~i %}text-white font-semibold{% else %}text-slate-400{% endif %} hover:text-white transition focus:outline-none">
+                                        <span>{{i}}. Paket Sulawesi Selatan {{i}}</span>
+                                        <i class="fa-solid fa-chevron-down text-[8px] transition-transform duration-300 {% if paket == 'sulsel_'~i %}rotate-180{% endif %}" id="icon-dropdown-sulsel-{{i}}"></i>
+                                    </button>
+                                    <div id="dropdown-sulsel-{{i}}" class="{% if paket == 'sulsel_'~i %}flex{% else %}hidden{% endif %} flex-col pl-4 mt-1 space-y-1 border-l border-slate-700/50">
+                                        <a href="#" class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">- Laporan</a>
+                                        <a href="{{ url_for('kurva_s') }}?paket=sulsel_{{i}}" class="block py-1 text-xs {% if paket == 'sulsel_'~i %}text-indigo-400 font-medium{% else %}text-slate-500{% endif %} hover:text-indigo-400 transition">- Kurva S</a>
+                                        <a href="{{ url_for('peta') }}?paket=sulsel_{{i}}" class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">- Lokasi</a>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- B. Sulawesi Barat -->
+                        <div>
+                            <button type="button" onclick="toggleDropdown('dropdown-sulbar', event)" class="w-full flex items-center justify-between py-1 text-sm font-medium {% if paket.startswith('sulbar') %}text-white{% else %}text-slate-300{% endif %} hover:text-white transition focus:outline-none">
+                                <span>B. Sulawesi Barat</span>
+                                <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-300 {% if paket.startswith('sulbar') %}rotate-180{% endif %}" id="icon-dropdown-sulbar"></i>
+                            </button>
+                            <div id="dropdown-sulbar" class="{% if paket.startswith('sulbar') %}flex{% else %}hidden{% endif %} flex-col pl-4 mt-2 space-y-2 border-l border-slate-700/50">
+                                {% for i in range(1, 5) %}
+                                <div>
+                                    <button type="button" onclick="toggleDropdown('dropdown-sulbar-{{i}}', event)" class="w-full flex items-center justify-between py-1 text-xs {% if paket == 'sulbar_'~i %}text-white font-semibold{% else %}text-slate-400{% endif %} hover:text-white transition focus:outline-none">
+                                        <span>{{i}}. Paket Sulawesi Barat {{i}}</span>
+                                        <i class="fa-solid fa-chevron-down text-[8px] transition-transform duration-300 {% if paket == 'sulbar_'~i %}rotate-180{% endif %}" id="icon-dropdown-sulbar-{{i}}"></i>
+                                    </button>
+                                    <div id="dropdown-sulbar-{{i}}" class="{% if paket == 'sulbar_'~i %}flex{% else %}hidden{% endif %} flex-col pl-4 mt-1 space-y-1 border-l border-slate-700/50">
+                                        <a href="#" class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">- Laporan</a>
+                                        <a href="{{ url_for('kurva_s') }}?paket=sulbar_{{i}}" class="block py-1 text-xs {% if paket == 'sulbar_'~i %}text-indigo-400 font-medium{% else %}text-slate-500{% endif %} hover:text-indigo-400 transition">- Kurva S</a>
+                                        <a href="{{ url_for('peta') }}?paket=sulbar_{{i}}" class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">- Lokasi</a>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- C. Sulawesi Tengah -->
+                        <div>
+                            <button type="button" onclick="toggleDropdown('dropdown-sulteng', event)" class="w-full flex items-center justify-between py-1 text-sm font-medium {% if paket.startswith('sulteng') %}text-white{% else %}text-slate-300{% endif %} hover:text-white transition focus:outline-none">
+                                <span>C. Sulawesi Tengah</span>
+                                <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-300 {% if paket.startswith('sulteng') %}rotate-180{% endif %}" id="icon-dropdown-sulteng"></i>
+                            </button>
+                            <div id="dropdown-sulteng" class="{% if paket.startswith('sulteng') %}flex{% else %}hidden{% endif %} flex-col pl-4 mt-2 space-y-2 border-l border-slate-700/50">
+                                {% for i in range(1, 12) %}
+                                <div>
+                                    <button type="button" onclick="toggleDropdown('dropdown-sulteng-{{i}}', event)" class="w-full flex items-center justify-between py-1 text-xs {% if paket == 'sulteng_'~i %}text-white font-semibold{% else %}text-slate-400{% endif %} hover:text-white transition focus:outline-none">
+                                        <span>{{i}}. Paket Sulawesi Tengah {{i}}</span>
+                                        <i class="fa-solid fa-chevron-down text-[8px] transition-transform duration-300 {% if paket == 'sulteng_'~i %}rotate-180{% endif %}" id="icon-dropdown-sulteng-{{i}}"></i>
+                                    </button>
+                                    <div id="dropdown-sulteng-{{i}}" class="{% if paket == 'sulteng_'~i %}flex{% else %}hidden{% endif %} flex-col pl-4 mt-1 space-y-1 border-l border-slate-700/50">
+                                        <a href="#" class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">- Laporan</a>
+                                        <a href="{{ url_for('kurva_s') }}?paket=sulteng_{{i}}" class="block py-1 text-xs {% if paket == 'sulteng_'~i %}text-indigo-400 font-medium{% else %}text-slate-500{% endif %} hover:text-indigo-400 transition">- Kurva S</a>
+                                        <a href="{{ url_for('peta') }}?paket=sulteng_{{i}}" class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">- Lokasi</a>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- D. Sulawesi Tenggara -->
+                        <div>
+                            <button type="button" onclick="toggleDropdown('dropdown-sultra', event)" class="w-full flex items-center justify-between py-1 text-sm font-medium {% if paket.startswith('sultra') %}text-white{% else %}text-slate-300{% endif %} hover:text-white transition focus:outline-none">
+                                <span>D. Sulawesi Tenggara</span>
+                                <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-300 {% if paket.startswith('sultra') %}rotate-180{% endif %}" id="icon-dropdown-sultra"></i>
+                            </button>
+                            <div id="dropdown-sultra" class="{% if paket.startswith('sultra') %}flex{% else %}hidden{% endif %} flex-col pl-4 mt-2 space-y-2 border-l border-slate-700/50">
+                                <div>
+                                    <button type="button" onclick="toggleDropdown('dropdown-sultra-1', event)" class="w-full flex items-center justify-between py-1 text-xs {% if paket == 'sultra_1' %}text-white font-semibold{% else %}text-slate-400{% endif %} hover:text-white transition focus:outline-none">
+                                        <span>1. Paket Sulawesi Tenggara 1</span>
+                                        <i class="fa-solid fa-chevron-down text-[8px] transition-transform duration-300 {% if paket == 'sultra_1' %}rotate-180{% endif %}" id="icon-dropdown-sultra-1"></i>
+                                    </button>
+                                    <div id="dropdown-sultra-1" class="{% if paket == 'sultra_1' %}flex{% else %}hidden{% endif %} flex-col pl-4 mt-1 space-y-1 border-l border-slate-700/50">
+                                        <a href="#" class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">- Laporan</a>
+                                        <a href="{{ url_for('kurva_s') }}?paket=sultra_1" class="block py-1 text-xs {% if paket == 'sultra_1' %}text-indigo-400 font-medium{% else %}text-slate-500{% endif %} hover:text-indigo-400 transition">- Kurva S</a>
+                                        <a href="{{ url_for('peta') }}?paket=sultra_1" class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">- Lokasi</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+            <div class="p-4 border-t border-slate-800 text-sm text-slate-500 text-center">
+                Monev System v1.0
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col relative overflow-y-auto overflow-x-hidden bg-slate-50">
+            
+            <!-- Header -->
+            <header class="bg-white shadow-sm sticky top-0 z-10 p-4 transition-all flex justify-between items-center px-8">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-800">Detail Kurva S</h2>
+                    <p class="text-sm text-slate-500" id="header-paket-name">Memuat nama paket...</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="bg-indigo-50 text-indigo-700 px-4 py-2 rounded-full font-medium text-sm flex items-center">
+                        <span class="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse"></span>
+                        Data Google Sheets
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Content -->
+            <div class="p-8 max-w-7xl mx-auto w-full space-y-8">
+                
+                <!-- Full Width Chart Section -->
+                <div class="glass-card w-full p-6 rounded-2xl border border-slate-100 relative">
+                    <!-- Loading Overlay -->
+                    <div id="loading-overlay" class="absolute inset-0 bg-white/80 z-10 flex items-center justify-center rounded-2xl backdrop-blur-sm">
+                        <div class="flex flex-col items-center">
+                            <i class="fa-solid fa-circle-notch fa-spin text-3xl text-indigo-500 mb-3"></i>
+                            <span class="text-slate-600 font-medium">Mengambil data S-Curve...</span>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-bold text-slate-800">Progress Pelaksanaan (Target vs Realisasi)</h3>
+                        <button class="text-sm text-indigo-600 hover:text-indigo-800 font-medium transition flex items-center">
+                            Unduh Grafik <i class="fa-solid fa-download ml-2 text-xs"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="h-[500px] w-full relative">
+                        <canvas id="sCurveChart"></canvas>
+                    </div>
+                    
+                    <div class="mt-6 flex items-center justify-between px-4">
+                        <div class="text-sm text-slate-500">
+                            Sumber Data: Google Sheets
+                        </div>
+                        <div class="flex gap-4 flex-wrap">
+                            <div class="flex items-center">
+                                <span class="w-3 h-3 rounded-full bg-slate-300 mr-2"></span>
+                                <span class="text-sm text-slate-600 font-medium">Target Kumulatif (%)</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="w-3 h-3 rounded-full bg-indigo-600 mr-2"></span>
+                                <span class="text-sm text-slate-600 font-medium">Realisasi Kumulatif (%)</span>
+                            </div>
+                            <div class="flex items-center ml-2">
+                                <div class="flex mr-2">
+                                    <span class="w-3 h-3 rounded-sm bg-green-500 mr-1"></span>
+                                    <span class="w-3 h-3 rounded-sm bg-red-500"></span>
+                                </div>
+                                <span class="text-sm text-slate-600 font-medium">Deviasi (+/-)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Function for Sidebar Accordions
+        window.toggleDropdown = function(id, event) {
+            if(event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            const el = document.getElementById(id);
+            const icon = document.getElementById('icon-' + id);
+            if (!el) return;
+            
+            if (el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+                el.classList.add('flex');
+                if(icon) icon.classList.add('rotate-180');
+            } else {
+                el.classList.add('hidden');
+                el.classList.remove('flex');
+                if(icon) icon.classList.remove('rotate-180');
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const paketId = "{{ paket }}"; // e.g. "sulsel_1"
+            let targetDisplayName = "Paket Spesifik";
+            
+            if (paketId) {
+                let nomor = paketId.split('_')[1];
+                if (paketId.startsWith('sulsel_')) {
+                    targetDisplayName = "Paket Sulawesi Selatan " + nomor;
+                } else if (paketId.startsWith('sulbar_')) {
+                    targetDisplayName = "Paket Sulawesi Barat " + nomor;
+                } else if (paketId.startsWith('sulteng_')) {
+                    targetDisplayName = "Paket Sulawesi Tengah " + nomor;
+                } else if (paketId.startsWith('sultra_')) {
+                    targetDisplayName = "Paket Sulawesi Tenggara " + nomor;
+                }
+            }
+            
+            document.getElementById('header-paket-name').innerText = targetDisplayName;
+
+            // Fetch data from API
+            fetch(`/api/kurva_s/${paketId}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('loading-overlay').classList.add('hidden');
+                    if (data.error) {
+                        alert('Gagal mengambil data S-Curve: ' + data.error);
+                        return;
+                    }
+                    renderSCurveChart(data);
+                })
+                .catch(error => {
+                    document.getElementById('loading-overlay').classList.add('hidden');
+                    console.error('Error fetching s-curve data:', error);
+                    alert('Terjadi kesalahan koneksi saat mengambil data S-Curve.');
+                });
+        });
+
+        const renderSCurveChart = (data) => {
+            const ctx = document.getElementById('sCurveChart').getContext('2d');
+            
+            // Chart.js default font
+            Chart.defaults.font.family = "'Inter', sans-serif";
+            Chart.defaults.color = '#64748b';
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        {
+                            type: 'bar',
+                            label: 'Deviasi (%)',
+                            data: data.deviation || [],
+                            backgroundColor: (data.deviation || []).map(val => val >= 0 ? 'rgba(34, 197, 94, 0.7)' : 'rgba(239, 68, 68, 0.7)'),
+                            borderColor: (data.deviation || []).map(val => val >= 0 ? 'rgba(34, 197, 94, 1)' : 'rgba(239, 68, 68, 1)'),
+                            borderWidth: 1,
+                            borderRadius: 4,
+                            barPercentage: 0.5
+                        },
+                        {
+                            type: 'line',
+                            label: 'Target Kumulatif (%)',
+                            data: data.target,
+                            borderColor: '#94a3b8',
+                            borderDash: [5, 5],
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#fff',
+                            tension: 0.4
+                        },
+                        {
+                            type: 'line',
+                            label: 'Realisasi Kumulatif (%)',
+                            data: data.realized,
+                            borderColor: '#4f46e5',
+                            backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                            borderWidth: 3,
+                            pointBackgroundColor: '#ffffff',
+                            pointBorderColor: '#4f46e5',
+                            pointBorderWidth: 2,
+                            pointRadius: 5,
+                            fill: true,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: {
+                            display: false // Hidden because we created a custom legend
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                            titleFont: { size: 13 },
+                            bodyFont: { size: 13 },
+                            padding: 12,
+                            cornerRadius: 8,
+                            displayColors: true,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y + '%';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            suggestedMin: -5,
+                            suggestedMax: 100, // Percentage max
+                            title: {
+                                display: true,
+                                text: 'Persentase (%)'
+                            },
+                            grid: {
+                                color: '#f1f5f9',
+                                drawBorder: false,
+                            },
+                            border: { display: false }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Minggu'
+                            },
+                            grid: {
+                                display: false
+                            },
+                            border: { display: false }
+                        }
+                    }
+                }
+            });
+        };
+    </script>
+</body>
+</html>
