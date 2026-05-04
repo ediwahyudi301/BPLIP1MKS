@@ -9,6 +9,11 @@ app = Flask(__name__)
 
 SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR1b8XGbfCcCshv9MXfdQ8sHR5KfiT-l6zBf39YcrvicmJccREctopoq79hCEfzq5hnya_hM_LxtwML/pub?gid=684955607&single=true&output=csv"
 
+# Cache sederhana untuk mempercepat loading
+cache_dashboard = {'data': None, 'time': None}
+cache_master_sulsel = {'data': None, 'time': None}
+CACHE_TIMEOUT = 300 # 5 menit (dalam detik)
+
 # Pemetaan (Mapping) Paket ke ID Folder Google Drive
 # Default: 1HCmAUjk0Yd4O4OzQXQ2jEIXDIaaLq2RO (Folder Utama)
 DRIVE_FOLDER_MAPPING = {
@@ -32,6 +37,11 @@ def get_peta_status():
 
 
 def get_sulsel_master_summary():
+    # Cek Cache
+    now = datetime.now()
+    if cache_master_sulsel['data'] and cache_master_sulsel['time'] and (now - cache_master_sulsel['time']).seconds < CACHE_TIMEOUT:
+        return cache_master_sulsel['data']
+
     try:
         old_url = "https://docs.google.com/spreadsheets/d/1fPOem8nUIiQlhYbnZBDPafutAeaUMkKZBO6_0zRAqoQ/gviz/tq?tqx=out:csv&sheet=MASTER_PAKET_SULSEL"
         new_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS0JKAKWKm4WZMXtFp_jFYgz7_RNpse8FBl9jw6M8TkTwZWTQEhoEUGQuNNMJLLQRVg0kE4bs-HdDsz/pub?output=csv&single=true&sheet=MASTER_PAKET_SULSEL"
@@ -91,12 +101,21 @@ def get_sulsel_master_summary():
         df2 = pd.read_csv(io.StringIO(req2.text), header=None)
         process_df(df2, 6, 24, col_luas=7, col_kontrak=6, col_realisasi=9, skip_rows=8)
         
+        # Simpan ke Cache
+        cache_master_sulsel['data'] = summary
+        cache_master_sulsel['time'] = now
+        
         return summary
     except Exception as e:
         print("Error fetching Sulsel Master Summary:", e)
         return None
 
 def fetch_dashboard_data():
+    # Cek Cache
+    now = datetime.now()
+    if cache_dashboard['data'] and cache_dashboard['time'] and (now - cache_dashboard['time']).seconds < CACHE_TIMEOUT:
+        return cache_dashboard['data']
+
     try:
         req = requests.get(SHEET_CSV_URL)
         req.encoding = 'utf-8'
@@ -198,7 +217,8 @@ def fetch_dashboard_data():
         if total_target > 0:
             overall_progress = round((total_realized / total_target) * 100, 1)
             
-        return {
+        # Simpan ke Cache
+        result = {
             'summary': {
                 'total_area_target': total_target, 
                 'total_area_realized': total_realized,
@@ -214,6 +234,10 @@ def fetch_dashboard_data():
             },
             'regional_status': regional_status
         }
+        cache_dashboard['data'] = result
+        cache_dashboard['time'] = now
+        
+        return result
     except Exception as e:
         print("Error fetching data dari API:", e)
         # Fallback jika terjadi kesalahan koneksi
