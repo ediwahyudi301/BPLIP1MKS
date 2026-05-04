@@ -44,7 +44,7 @@
     <div class="flex h-screen overflow-hidden">
 
         <!-- Sidebar -->
-        <aside class="w-64 bg-slate-900 text-white flex flex-col transition-all duration-300 shadow-2xl z-20">
+        <aside id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-slate-900 text-white flex flex-col transition-all duration-300 shadow-2xl z-30 -translate-x-full lg:translate-x-0 lg:static lg:inset-auto">
             <div class="p-5 flex flex-col items-center justify-center border-b border-slate-800 text-center gap-3">
                 <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" class="w-12 h-12 object-contain">
                 <h1 class="text-[11px] font-bold tracking-wider leading-snug">
@@ -255,22 +255,31 @@
         <main class="flex-1 flex flex-col relative overflow-hidden bg-slate-50">
 
             <!-- Header -->
-            <header class="bg-white shadow-sm z-10 p-4 transition-all flex justify-between items-center px-8 relative">
-                <div>
-                    <h2 class="text-2xl font-bold text-slate-800">SID Tersedia</h2>
-                    <p class="text-sm text-slate-500">Sebaran Lokasi Cetak Sawah</p>
+            <header class="bg-white shadow-sm z-10 p-4 transition-all flex justify-between items-center px-4 lg:px-8 relative">
+                <div class="flex items-center">
+                    <!-- Hamburger Button for Mobile -->
+                    <button onclick="toggleSidebar()" class="lg:hidden mr-4 text-slate-600 focus:outline-none">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                    <div>
+                        <h2 class="text-lg lg:text-2xl font-bold text-slate-800 leading-tight">SID Tersedia</h2>
+                        <p class="text-[10px] lg:text-sm text-slate-500">Sebaran Lokasi Cetak Sawah</p>
+                    </div>
                 </div>
-                <div class="flex items-center gap-3">
-                    <div id="sheet-data-badge" class="hidden flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-full border border-emerald-100 animate-pulse">
-                        <i class="fa-solid fa-rotate text-[10px]"></i>
-                        <span class="text-[10px] font-bold uppercase tracking-widest">Live Sync: Sheets Active</span>
+                <div class="flex items-center gap-2 lg:gap-3">
+                    <div id="sheet-data-badge" class="hidden flex items-center gap-1 px-2 py-1 bg-emerald-50 text-emerald-600 rounded-full border border-emerald-100 animate-pulse">
+                        <i class="fa-solid fa-rotate text-[8px]"></i>
+                        <span class="text-[8px] lg:text-[10px] font-bold uppercase tracking-widest">Live Sync</span>
                     </div>
                     <button onclick="window.print()"
-                        class="flex items-center px-4 py-2 bg-white text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 transition shadow-sm text-sm font-semibold">
-                        <i class="fa-solid fa-print mr-2"></i> Cetak Peta
+                        class="flex items-center px-3 py-1.5 lg:px-4 lg:py-2 bg-white text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 transition shadow-sm text-[10px] lg:text-sm font-semibold">
+                        <i class="fa-solid fa-print mr-1 lg:mr-2"></i> <span class="hidden sm:inline">Cetak Peta</span>
                     </button>
                 </div>
             </header>
+
+            <!-- Overlay for Mobile Sidebar -->
+            <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-20 hidden lg:hidden"></div>
 
             <!-- Map Container -->
             <div class="flex-1 w-full h-full relative z-0">
@@ -611,6 +620,18 @@
                 }
             });
         });
+
+        window.toggleSidebar = function() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
+        };
 
         window.toggleDropdown = function (id, event) {
             if (event) { event.preventDefault(); event.stopPropagation(); }
