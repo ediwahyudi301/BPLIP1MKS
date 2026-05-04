@@ -484,13 +484,13 @@
                                     const noPetak = props.N_PETAK || props.NO_PETAK || null;
                                     const pData = noPetak ? (sheetData[noPetak] || null) : null;
 
-                                    // ── Add Permanent Label ────────────────
-                                    if (noPetak) {
+                                    // ── Add Permanent Label (Only if Specific Packet is selected to save memory) ──
+                                    if (noPetak && paketId) {
                                         layer.bindTooltip(noPetak, { 
                                             permanent: true, 
                                             direction: 'center', 
                                             className: 'petak-label-style' 
-                                        }).openTooltip();
+                                        });
                                     }
 
                                     let popupContent = '';
