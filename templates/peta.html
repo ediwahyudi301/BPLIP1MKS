@@ -398,9 +398,33 @@
                     if (badge) badge.classList.remove('hidden');
                 }
 
-                geojsonFiles.forEach((file, index) => {
+                // ── Logic: Jika ada paket spesifik, muat file paketnya saja ──
+                let filesToLoad = geojsonFiles;
+                let isSpecificPacket = false;
+
+                if (paketId && paketId.startsWith('sulsel_')) {
+                    const nomor = paketId.split('_')[1];
+                    filesToLoad = [
+                        { 
+                            name: `Paket Sulsel ${nomor}`, 
+                            path: `/static/DATA_CSR/SULSEL_PAKET_${nomor}.geojson`,
+                            isFallback: true,
+                            fallbackPath: "{{ url_for('static', filename='DATA_CSR/SULAWESI_SELATAN.geojson') }}"
+                        }
+                    ];
+                    isSpecificPacket = true;
+                }
+                // Anda bisa tambahkan logika serupa untuk provinsi lain (sulbar, sulteng, dll) jika sudah ada filenya.
+
+                filesToLoad.forEach((file, index) => {
                     fetch(file.path)
-                        .then(r => r.json())
+                        .then(r => {
+                            if (!r.ok && file.isFallback) {
+                                // Jika file per-paket tidak ketemu, pakai file besar (provinsi)
+                                return fetch(file.fallbackPath).then(res => res.json());
+                            }
+                            return r.json();
+                        })
                         .then(data => {
                             let geojsonData = data;
                             if (targetNormalized) {
