@@ -123,6 +123,7 @@
                             </div>
                         </div>
 
+
                         <!-- B. Sulawesi Barat -->
                         <div>
                             <button type="button" onclick="toggleDropdown('dropdown-sulbar', event)"
@@ -133,7 +134,7 @@
                             </button>
                             <div id="dropdown-sulbar"
                                 class="hidden flex-col pl-4 mt-2 space-y-2 border-l border-slate-700/50">
-                                {% for i in range(1, 5) %}
+                                {% for i in range(1, 6) %}
                                 <div>
                                     <button type="button" onclick="toggleDropdown('dropdown-sulbar-{{i}}', event)"
                                         class="w-full flex items-center justify-between py-1 text-xs text-slate-400 hover:text-white transition focus:outline-none">
@@ -218,31 +219,34 @@
                             </button>
                             <div id="dropdown-sultra"
                                 class="hidden flex-col pl-4 mt-2 space-y-2 border-l border-slate-700/50">
+                                {% for i in range(1, 6) %}
                                 <div>
-                                    <button type="button" onclick="toggleDropdown('dropdown-sultra-1', event)"
+                                    <button type="button" onclick="toggleDropdown('dropdown-sultra-{{i}}', event)"
                                         class="w-full flex items-center justify-between py-1 text-xs text-slate-400 hover:text-white transition focus:outline-none">
-                                        <span>1. Paket Sulawesi Tenggara 1</span>
+                                        <span>{{i}}. Paket Sulawesi Tenggara {{i}}</span>
                                         <i class="fa-solid fa-chevron-down text-[8px] transition-transform duration-300"
-                                            id="icon-dropdown-sultra-1"></i>
+                                            id="icon-dropdown-sultra-{{i}}"></i>
                                     </button>
-                                    <div id="dropdown-sultra-1"
+                                    <div id="dropdown-sultra-{{i}}"
                                         class="hidden flex-col pl-4 mt-1 space-y-1 border-l border-slate-700/50">
-                                        <a href="{{ url_for('laporan') }}?paket=sultra_1"
+                                        <a href="{{ url_for('laporan') }}?paket=sultra_{{i}}"
                                             class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
                                             Laporan</a>
-                                        <a href="{{ url_for('kurva_s') }}?paket=sultra_1"
+                                        <a href="{{ url_for('kurva_s') }}?paket=sultra_{{i}}"
                                             class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
                                             Kurva S</a>
-                                        <a href="{{ url_for('peta') }}?paket=sultra_1"
+                                        <a href="{{ url_for('peta') }}?paket=sultra_{{i}}"
                                             class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
                                             Lokasi</a>
-                                        <a href="{{ url_for('realisasi') }}?paket=sultra_1&minggu=1"
+                                        <a href="{{ url_for('realisasi') }}?paket=sultra_{{i}}&minggu=1"
                                             class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
                                             Realisasi</a>
                                     </div>
                                 </div>
+                                {% endfor %}
                             </div>
                         </div>
+
                     </div>
                 </div>
             </nav>
@@ -284,6 +288,14 @@
             <!-- Map Container -->
             <div class="flex-1 w-full h-full relative z-0">
                 <div id="map" class="w-full h-full"></div>
+                
+                <!-- Simple Loading Overlay -->
+                <div id="map-loader" class="absolute inset-0 z-[1000] bg-slate-900/40 backdrop-blur-[2px] flex items-center justify-center transition-opacity duration-300">
+                    <div class="flex flex-col items-center gap-3 bg-white p-6 rounded-2xl shadow-xl">
+                        <i class="fa-solid fa-circle-notch fa-spin text-3xl text-indigo-600"></i>
+                        <span class="text-sm font-bold text-slate-700 tracking-wide">Memuat Data Spasial...</span>
+                    </div>
+                </div>
             </div>
         </main>
     </div>
@@ -291,351 +303,229 @@
     <!-- Map Script -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const map = L.map('map').setView([-2.5489, 118.0149], 5);
+            const map = L.map('map', { preferCanvas: true }).setView([-2.5489, 118.0149], 5);
 
-            // ── Dynamic Label Scaling ────────────────
+            const hideLoader = () => {
+                const loader = document.getElementById('map-loader');
+                if (loader) {
+                    loader.style.opacity = '0';
+                    setTimeout(() => loader.classList.add('hidden'), 300);
+                }
+            };
+
             function updateLabelScaling() {
                 const zoom = map.getZoom();
                 let fontSize = '0px'; 
                 if (zoom >= 14 && zoom < 16) fontSize = '9px';
                 if (zoom >= 16) fontSize = '12px';
-                
-                document.querySelectorAll('.petak-label-style').forEach(el => {
-                    el.style.fontSize = fontSize;
-                });
+                document.querySelectorAll('.petak-label-style').forEach(el => el.style.fontSize = fontSize);
             }
             map.on('zoomend', updateLabelScaling);
-            map.on('overlayadd', () => setTimeout(updateLabelScaling, 100)); // Delay agar layer selesai render
+            map.on('overlayadd', () => setTimeout(updateLabelScaling, 100));
 
-            const googleHybrid = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
-                maxZoom: 20, attribution: '&copy; Google'
-            });
-            const googleSatellite = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
-                maxZoom: 20, attribution: '&copy; Google'
-            });
-            const googleStreet = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-                maxZoom: 20, attribution: '&copy; Google'
-            });
-            const esriSatellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                maxZoom: 19, attribution: '&copy; Esri'
-            });
-
+            const googleHybrid = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { maxZoom: 20, attribution: 'Google' });
+            const googleSatellite = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 20, attribution: 'Google' });
+            const esriSatellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: 'Esri' });
             googleHybrid.addTo(map);
 
-            const geojsonFiles = [
-                { name: 'Sulawesi Barat', path: "{{ url_for('static', filename='DATA_CSR/SULAWESI_BARAT.geojson') }}" },
-                { name: 'Sulawesi Selatan', path: "{{ url_for('static', filename='DATA_CSR/SULAWESI_SELATAN.geojson') }}" },
-                { name: 'Sulawesi Tengah', path: "{{ url_for('static', filename='DATA_CSR/SULAWESI_TENGAH.geojson') }}" },
-                { name: 'Sulawesi Tenggara', path: "{{ url_for('static', filename='DATA_CSR/SULAWESI_TENGGARA.geojson') }}" }
-            ];
-
-            const baseMaps = {
-                "Google Hybrid": googleHybrid,
-                "Google Satellite": googleSatellite,
-                "Google Street": googleStreet,
-                "ESRI Satellite": esriSatellite
-            };
-
+            const baseMaps = { "Google Hybrid": googleHybrid, "Google Satellite": googleSatellite, "ESRI Satellite": esriSatellite };
             const layerControl = L.control.layers(baseMaps, {}, { position: 'topright' }).addTo(map);
+
+            function fixGeoJsonCoordinates(data) {
+                if (!data || !data.features || data.features.length === 0) return data;
+                let needsFix = false;
+                try {
+                    let c = data.features[0].geometry.coordinates;
+                    while(Array.isArray(c[0])) c = c[0];
+                    if (Math.abs(c[0]) > 180 || Math.abs(c[1]) > 90) needsFix = true;
+                } catch(e) {}
+                if (!needsFix) return data;
+
+                const convert = (c) => {
+                    const lon = (c[0] / 20037508.34) * 180;
+                    const lat = (Math.atan(Math.exp((c[1] / 20037508.34) * Math.PI)) * 360) / Math.PI - 90;
+                    return [lon, lat, c[2] || 0];
+                };
+                const traverse = (obj) => {
+                    if (Array.isArray(obj)) {
+                        if (typeof obj[0] === 'number') {
+                            const fixed = convert(obj);
+                            obj[0] = fixed[0]; obj[1] = fixed[1];
+                        } else {
+                            for (let i=0; i<obj.length; i++) traverse(obj[i]);
+                        }
+                    }
+                };
+                data.features.forEach(f => { if (f.geometry && f.geometry.coordinates) traverse(f.geometry.coordinates); });
+                
+                if (data.crs) delete data.crs;
+                
+                return data;
+            }
+
             const urlParams = new URLSearchParams(window.location.search);
             const paketId = urlParams.get('paket');
+            
+            // Base path untuk data GeoJSON
+            const geojsonBasePath = "{{ url_for('static', filename='DATA_CSR/') }}";
 
-            const palette = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#22c55e', '#10b981', '#14b8a6', '#06b6d4', '#0ea5e9', '#0284c7', '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e', '#e11d48'];
-            function getColorForPaket(paketName) {
-                if (!paketName) return '#3b82f6';
-                let hash = 0;
-                for (let i = 0; i < paketName.length; i++) {
-                    hash = paketName.charCodeAt(i) + ((hash << 5) - hash);
-                }
-                return palette[Math.abs(hash) % palette.length];
-            }
-
-            function getStatusColor(sheetData) {
-                if (!sheetData) return null;
-                const stages = ['LAND_CLEARING', 'LAND_LEVELLING', 'OLAH_LAHAN'];
-                const done = stages.filter(s => {
-                    const val = (sheetData[s] || '').toLowerCase();
-                    return ['sudah', 'selesai', 'done', 'ya', 'yes'].includes(val);
-                }).length;
-                if (done === 3) return '#22c55e';
-                if (done === 2) return '#84cc16';
-                if (done === 1) return '#f59e0b';
-                return '#ef4444';
-            }
-
-            function statusBadge(val) {
-                const v = (val || '').toLowerCase();
-                const done = ['sudah', 'selesai', 'done', 'ya', 'yes'].includes(v);
-                return done 
-                    ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700"><i class="fa-solid fa-check"></i>${val}</span>`
-                    : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-600"><i class="fa-solid fa-clock"></i>${val}</span>`;
-            }
+            // Definisikan file GeoJSON untuk tampilan ringkasan (Overview)
+            const geojsonFiles = [
+                { name: 'Sulawesi Selatan', path: geojsonBasePath + 'SULAWESI_SELATAN.geojson' },
+                { name: 'Sulawesi Barat', path: geojsonBasePath + 'SULAWESI_BARAT.geojson' },
+                { name: 'Sulawesi Tengah', path: geojsonBasePath + 'SULAWESI_TENGAH.geojson' },
+                { name: 'Sulawesi Tenggara', path: geojsonBasePath + 'SULAWESI_TENGGARA.geojson' }
+            ];
 
             let targetNormalized = null;
             let targetDisplayName = null;
             if (paketId) {
                 const parts = paketId.split('_');
-                const prov = parts[0];
-                const nomor = parts[1];
                 const provMap = { 'sulsel': 'sulawesi selatan', 'sulbar': 'sulawesi barat', 'sulteng': 'sulawesi tengah', 'sultra': 'sulawesi tenggara' };
-                if (provMap[prov]) {
-                    targetNormalized = `${provMap[prov]} ${nomor}`;
-                    targetDisplayName = `Paket ${provMap[prov].split(' ').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ')} ${nomor}`;
+                if (provMap[parts[0]]) {
+                    targetNormalized = `${provMap[parts[0]]} ${parts[1]}`;
+                    targetDisplayName = `Paket ${provMap[parts[0]].split(' ').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ')} ${parts[1]}`;
                 }
             }
 
-            let petakDataPromise = Promise.resolve({});
-            if (paketId) {
-                petakDataPromise = fetch(`/api/petak_data/${paketId}`)
-                    .then(r => r.ok ? r.json() : {})
-                    .catch(() => ({}));
-            }
+            // Fetch data status dari spreadsheet
+            // Jika paketId ada, ambil data paket tersebut. Jika tidak, ambil data SEMUA paket untuk overview.
+            const statusUrl = paketId ? `/api/petak_data/${paketId}` : '/api/petak_data/all';
+            
+            fetch(statusUrl)
+                .then(r => r.ok ? r.json() : {})
+                .catch(() => ({}))
+                .then(sheetData => {
+                    const hasSheetData = Object.keys(sheetData).length > 0;
+                    if (hasSheetData) document.getElementById('sheet-data-badge')?.classList.remove('hidden');
 
-            petakDataPromise.then(sheetData => {
-                const hasSheetData = sheetData && Object.keys(sheetData).length > 0;
-                if (hasSheetData) {
-                    const badge = document.getElementById('sheet-data-badge');
-                    if (badge) badge.classList.remove('hidden');
-                }
+                    let filesToLoad = geojsonFiles;
+                    let isSpecificPacket = false;
 
-                // ── Logic: Jika ada paket spesifik, muat file paketnya saja ──
-                let filesToLoad = geojsonFiles;
-                let isSpecificPacket = false;
-
-                const provConfig = {
-                    'sulsel': { name: 'Sulawesi Selatan', prefix: 'SULSEL', full: 'SULAWESI_SELATAN.geojson' },
-                    'sulbar': { name: 'Sulawesi Barat', prefix: 'SULBAR', full: 'SULAWESI_BARAT.geojson' },
-                    'sulteng': { name: 'Sulawesi Tengah', prefix: 'SULTENG', full: 'SULAWESI_TENGAH.geojson' },
-                    'sultra': { name: 'Sulawesi Tenggara', prefix: 'SULTRA', full: 'SULAWESI_TENGGARA.geojson' }
-                };
-
-                if (paketId) {
-                    const parts = paketId.split('_');
-                    const provKey = parts[0];
-                    const nomor = parts[1];
-                    const config = provConfig[provKey];
-                    
-                    if (config) {
-                        filesToLoad = [
-                            { 
-                                name: `Paket ${config.name} ${nomor}`, 
-                                path: `/static/DATA_CSR/${config.prefix}_PAKET_${nomor}.geojson`,
+                    if (paketId) {
+                        const parts = paketId.split('_');
+                        const provConfig = {
+                            'sulsel': { prefix: 'SULSEL', full: 'SULAWESI_SELATAN.geojson' },
+                            'sulbar': { prefix: 'SULBAR', full: 'SULAWESI_BARAT.geojson' },
+                            'sulteng': { prefix: 'SULTENG', full: 'SULAWESI_TENGAH.geojson' },
+                            'sultra': { prefix: 'SULTRA', full: 'SULAWESI_TENGGARA.geojson' }
+                        };
+                        const config = provConfig[parts[0]];
+                        if (config) {
+                            filesToLoad = [{ 
+                                name: targetDisplayName, 
+                                path: geojsonBasePath + `${config.prefix}_PAKET_${parts[1]}.geojson`,
                                 isFallback: true,
-                                fallbackPath: `/static/DATA_CSR/${config.full}`
-                            }
-                        ];
-                        isSpecificPacket = true;
+                                fallbackPath: geojsonBasePath + config.full
+                            }];
+                            isSpecificPacket = true;
+                        }
                     }
-                }
 
-                filesToLoad.forEach((file, index) => {
-                    fetch(file.path)
-                        .then(r => {
-                            if (!r.ok) {
-                                if (file.isFallback) {
-                                    console.warn(`File paket ${file.path} tidak ditemukan, mencoba fallback ke ${file.fallbackPath}`);
-                                    return fetch(file.fallbackPath).then(res => res.json());
-                                }
-                                throw new Error(`HTTP error! status: ${r.status}`);
-                            }
-                            return r.json();
-                        })
-                        .catch(err => {
-                            console.error(`Gagal memuat GeoJSON (${file.name}):`, err);
-                            // Sembunyikan loading jika ada (meskipun tidak ada overlay formal, ini mencegah hang)
-                            return null; 
-                        })
-                        .then(data => {
-                            if (!data) return;
-                            let geojsonData = data;
-                            if (targetNormalized) {
-                                geojsonData = {
-                                    ...data,
-                                    features: data.features.filter(f => {
-                                        if (!f.properties || !f.properties.PAKET) return false;
-                                        let propName = String(f.properties.PAKET).replace(/paket/i, '').trim().toLowerCase();
-                                        return propName === targetNormalized;
-                                    })
-                                };
-                                if (geojsonData.features.length === 0) return;
-                            }
+                    let loadedCount = 0;
+                    console.log("Total files to load:", filesToLoad.length);
+                    if (filesToLoad.length === 0) hideLoader();
 
-                            const layer = L.geoJSON(geojsonData, {
-                                style: (feature) => {
-                                    const props = feature.properties || {};
-                                    // Support both N_PETAK or NO_PETAK as the join key from GeoJSON
-                                    const noPetak = props.N_PETAK || props.NO_PETAK || null;
-                                    const pData = noPetak ? sheetData[noPetak] : null;
-                                    const statusColor = hasSheetData ? getStatusColor(pData) : null;
-                                    const baseColor = props.PAKET ? getColorForPaket(props.PAKET) : '#3b82f6';
-                                    
-                                    const polyColor = statusColor || baseColor;
-                                    
-                                    return { 
-                                        color: polyColor, 
-                                        weight: 1.5,
-                                        opacity: 1.0, 
-                                        fillColor: polyColor, 
-                                        fillOpacity: 0.2 
+                    const allLayersGroup = L.featureGroup().addTo(map);
+
+                    filesToLoad.forEach(file => {
+                        console.log("Fetching:", file.name);
+                        fetch(file.path)
+                            .then(r => {
+                                if (r.ok) return r.json();
+                                if (file.isFallback) return fetch(file.fallbackPath).then(res => res.json());
+                                throw new Error('File not found');
+                            })
+                            .then(data => {
+                                if (!data) return;
+                                let geojsonData = fixGeoJsonCoordinates(data);
+
+                                if (targetNormalized) {
+                                    geojsonData = {
+                                        ...data,
+                                        features: data.features.filter(f => {
+                                            if (!f.properties || !f.properties.PAKET) return false;
+                                            return String(f.properties.PAKET).replace(/paket/i, '').trim().toLowerCase() === targetNormalized;
+                                        })
                                     };
-                                },
-                                onEachFeature: (feature, layer) => {
-                                    const props = feature.properties || {};
-                                    const noPetak = props.N_PETAK || props.NO_PETAK || null;
-                                    const pData = noPetak ? (sheetData[noPetak] || null) : null;
+                                }
+                                if (geojsonData.features.length === 0) return;
 
-                                    // ── Add Permanent Label (Only if Specific Packet is selected to save memory) ──
-                                    if (noPetak && paketId) {
-                                        layer.bindTooltip(noPetak, { 
-                                            permanent: true, 
-                                            direction: 'center', 
-                                            className: 'petak-label-style' 
-                                        });
-                                    }
-
-                                    let popupContent = '';
-
-                                    if (paketId) {
-                                        // ── Normalize and Merge properties ────────────────
-                                        const keyMapping = {
-                                            'WADMPR': 'PROVINSI', 'PROVINSI': 'PROVINSI',
-                                            'WADMKK': 'KABUPATEN', 'KABUPATEN': 'KABUPATEN',
-                                            'WADMKC': 'KECAMATAN', 'KECAMATAN': 'KECAMATAN',
-                                            'WADMKD': 'DESA', 'DESA_KEL': 'DESA', 'DESA': 'DESA',
-                                            'N_PETAK': 'N_PETAK', 'NO_PETAK': 'N_PETAK',
-                                            'K_POKTAN': 'K_POKTAN', 'KET_POKTAN': 'K_POKTAN',
-                                            'NAMA_PEMIL': 'NAMA_PEMIL', 'NAMA_PEMILIK': 'NAMA_PEMIL',
-                                            'LUAS_HA': 'LUAS', 'LUAS': 'LUAS', 'LUAS_Ha': 'LUAS',
-                                            'NO_HP': 'NO_HP', 'NO_HP_1': 'NO_HP', 'NO_HP1': 'NO_HP',
-                                            'P_SID': 'SID', 'SID': 'SID'
-                                        };
-
-                                        let combined = {};
-                                        // 1. From GeoJSON
-                                        Object.entries(props).forEach(([k, v]) => {
-                                            const normKey = keyMapping[k] || k.toUpperCase();
-                                            combined[normKey] = v;
-                                        });
-                                        // 2. From Spreadsheet (Override)
+                                const layer = L.geoJSON(geojsonData, {
+                                    style: (f) => {
+                                        const petakKey = f.properties.NO_PETAK || f.properties.N_PETAK;
+                                        const pData = sheetData[petakKey];
+                                        let color = '#3b82f6';
                                         if (pData) {
-                                            Object.entries(pData).forEach(([k, v]) => {
-                                                const upperK = k.toUpperCase().replace(/\s/g, '_');
-                                                const normKey = keyMapping[upperK] || upperK;
-                                                combined[normKey] = v;
-                                            });
+                                            const stages = ['LAND_CLEARING', 'LAND_LEVELLING', 'OLAH_LAHAN'];
+                                            const done = stages.filter(s => ['sudah','selesai','done','ya','yes'].includes((pData[s]||'').toLowerCase())).length;
+                                            color = done === 3 ? '#22c55e' : (done === 2 ? '#84cc16' : (done === 1 ? '#f59e0b' : '#ef4444'));
+                                        } else {
+                                            let hash = 0, n = f.properties.PAKET || '';
+                                            for (let i=0; i<n.length; i++) hash = n.charCodeAt(i) + ((hash << 5) - hash);
+                                            const p = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#22c55e', '#10b981', '#14b8a6', '#06b6d4', '#0ea5e9', '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#f43f5e'];
+                                            color = p[Math.abs(hash) % p.length];
+                                        }
+                                        return { color: color, weight: 1.5, fillOpacity: 0.4 };
+                                    },
+                                    onEachFeature: (feature, layer) => {
+                                        const props = feature.properties;
+                                        const noPetak = props.NO_PETAK || props.N_PETAK;
+                                        const pData = sheetData[noPetak];
+                                        const combined = { ...props, ...(pData || {}) };
+                                        
+                                        if (isSpecificPacket && noPetak) {
+                                            layer.bindTooltip(`${noPetak}`, { permanent: true, direction: 'center', className: 'petak-label-style' });
                                         }
 
-                                        const labelMap = {
-                                            'SID': 'SID',
-                                            'PENGAWAS': 'PENGAWAS',
-                                            'PROVINSI': 'Provinsi',
-                                            'KABUPATEN': 'Kabupaten',
-                                            'KECAMATAN': 'Kecamatan',
-                                            'DESA': 'Desa',
-                                            'N_PETAK': 'Nomor Petak',
-                                            'POKTAN': 'Kelompok Tani',
-                                            'K_POKTAN': 'Ketua Poktan',
-                                            'NAMA_PEMIL': 'Nama Pemilik',
-                                            'NO_HP': 'Nomor HP',
-                                            'LUAS': 'Luas (Ha)',
-                                            'LAND_CLEARING': 'LAND CLEARING',
-                                            'LAND_LEVELLING': 'LAND LEVELLING',
-                                            'OLAH_LAHAN': 'OLAH LAHAN',
-                                            'KENDALA': 'KENDALA'
-                                        };
-
-                                        const priority = [
-                                            'SID', 'PENGAWAS', 'PROVINSI', 'KABUPATEN', 'KECAMATAN', 'DESA', 
-                                            'N_PETAK', 'POKTAN', 'K_POKTAN', 'NAMA_PEMIL', 
-                                            'NO_HP', 'LUAS', 'LAND_CLEARING', 'LAND_LEVELLING', 'OLAH_LAHAN', 'KENDALA'
-                                        ];
                                         let itemsHtml = '';
-                                        priority.forEach(key => {
-                                            const val = combined[key];
-                                            if (val !== undefined && val !== null && val !== '') {
-                                                const label = labelMap[key] || key;
-                                                const isStatus = ['LAND_CLEARING', 'LAND_LEVELLING', 'OLAH_LAHAN'].includes(key);
-                                                
-                                                if (isStatus) {
-                                                    const isDone = String(val).toLowerCase().includes('selesai');
-                                                    itemsHtml += `
-                                                        <div class="flex items-center justify-between py-1.5 border-b border-slate-100 last:border-0">
-                                                            <span class="text-[10px] text-slate-500 font-medium">${label}</span>
-                                                            <span class="px-2 py-0.5 rounded text-[9px] font-bold ${isDone ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}">
-                                                                ${val}
-                                                            </span>
-                                                        </div>`;
-                                                } else {
-                                                    itemsHtml += `
-                                                        <div class="flex flex-col py-1.5 border-b border-slate-100 last:border-0">
-                                                            <span class="text-[9px] text-slate-400 uppercase tracking-wider font-bold mb-0.5">${label}</span>
-                                                            <span class="text-xs text-slate-700 font-semibold leading-tight">${val}</span>
-                                                        </div>`;
-                                                }
+                                        const hiddenCols = new Set(['KABUPATEN', 'KECAMATAN', 'DESA_KEL', 'POKTAN', 'KET_POKTAN', 'LUAS', 'NO_PETAK', 'N_PETAK', 'WADMKD', 'PAKET']);
+                                        Object.entries(combined).forEach(([k, v]) => {
+                                            if (v && v !== 'nan' && !hiddenCols.has(k)) {
+                                                const label = k.replace(/_/g, ' ');
+                                                itemsHtml += `
+                                                    <div class="flex justify-between items-start gap-4 py-1.5 border-b border-slate-100 last:border-0">
+                                                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-tight">${label}</span>
+                                                        <span class="text-[11px] font-semibold text-slate-700 text-right">${v}</span>
+                                                    </div>`;
                                             }
                                         });
 
-                                        const title = props.PAKET || 'Detail Polygon';
-                                        const badgeP = noPetak ? `<span class="ml-2 text-[10px] font-bold bg-indigo-600 text-white px-2 py-0.5 rounded-full shadow-sm">${noPetak}</span>` : '';
-                                        popupContent = `
-                                            <div class="font-inter p-0 min-w-[280px] max-w-[360px]">
-                                                <div class="flex items-center p-4 bg-slate-900 text-white rounded-t-xl mb-0">
-                                                    <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white mr-3 shrink-0"><i class="fa-solid fa-location-dot"></i></div>
-                                                    <div class="flex-1 min-w-0">
-                                                        <h4 class="text-sm font-bold leading-tight flex items-center">${title}${badgeP}</h4>
-                                                        <div class="text-[10px] text-slate-400 uppercase tracking-widest mt-0.5">${file.name}</div>
-                                                    </div>
+                                        layer.bindPopup(`
+                                            <div class="min-w-[240px] p-1">
+                                                <div class="mb-3 pb-2 border-b border-slate-200">
+                                                    <h3 class="text-sm font-bold text-slate-800">${props.WADMKD || 'Detail Lokasi'}</h3>
+                                                    <p class="text-[10px] text-indigo-600 font-bold uppercase tracking-wider">${props.PAKET || ''}</p>
                                                 </div>
-                                                <div class="p-3 max-h-80 overflow-y-auto custom-scrollbar">
-                                                    ${itemsHtml}
-                                                    ${hasSheetData && !pData ? `<div class="mt-4 p-3 bg-rose-50 rounded-xl border border-rose-100 text-center"><i class="fa-solid fa-triangle-exclamation text-rose-500 mb-1"></i><p class="text-[10px] text-rose-600 font-medium">Petak ini tidak ditemukan di Google Sheets</p></div>` : ''}
-                                                </div>
-                                            </div>`;
-                                    } else {
-                                        // ── OPTION B: Simple Basic Popup (for general "SID Tersedia" view) ──
-                                        let propsHtml = '';
-                                        for (const [key, value] of Object.entries(props)) {
-                                            const displayValue = (value !== null && value !== '') ? value : '-';
-                                            propsHtml += `
-                                                <div class="flex justify-between items-start py-2 border-b border-slate-100 last:border-0 gap-4">
-                                                    <span class="text-slate-400 font-medium text-[10px] uppercase tracking-wider mt-0.5">${key.replace(/_/g, ' ')}</span>
-                                                    <span class="text-slate-800 text-xs font-semibold text-right break-words max-w-[60%]">${displayValue}</span>
-                                                </div>`;
-                                        }
-                                        const title = props.PAKET || 'Detail Polygon';
-                                        popupContent = `
-                                            <div class="font-inter p-1 min-w-[240px] max-w-[320px]">
-                                                <div class="flex items-center mb-3 pb-3 border-b border-slate-200">
-                                                    <div class="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-500 mr-3 shadow-sm shrink-0"><i class="fa-solid fa-map-pin"></i></div>
-                                                    <div class="flex-1 min-w-0">
-                                                        <h4 class="text-sm font-bold text-slate-800 leading-tight">${title}</h4>
-                                                        <div class="text-[10px] text-slate-400 uppercase tracking-widest mt-0.5">${file.name}</div>
-                                                    </div>
-                                                </div>
-                                                <div class="max-h-64 overflow-y-auto custom-scrollbar pr-1">${propsHtml || '<div class="text-xs text-slate-400 italic text-center py-2">Tidak ada atribut data tersedia</div>'}</div>
-                                            </div>`;
+                                                <div class="space-y-0.5">${itemsHtml}</div>
+                                            </div>
+                                        `, { maxWidth: 300, className: 'custom-popup' });
+
+                                        layer.on({
+                                            mouseover: (e) => { e.target.setStyle({ fillOpacity: 0.7, weight: 3 }); },
+                                            mouseout: (e) => { e.target.setStyle({ fillOpacity: 0.4, weight: 1.5 }); }
+                                        });
                                     }
+                                });
 
-                                    layer.bindPopup(popupContent, { 
-                                        className: paketId ? 'premium-popup' : 'soft-popup', 
-                                        minWidth: paketId ? 280 : 240 
-                                    });
-
-                                    layer.on('mouseover', function() { this.setStyle({ weight: 3 }); });
-                                    layer.on('mouseout', function() { this.setStyle({ weight: 1.5 }); });
+                                allLayersGroup.addLayer(layer);
+                                layerControl.addOverlay(layer, targetDisplayName ? `Fokus: ${targetDisplayName}` : `Area ${file.name}`);
+                                if (isSpecificPacket) map.fitBounds(layer.getBounds(), { padding: [50, 50] });
+                            })
+                            .catch(err => console.error(`Error loading ${file.name}:`, err))
+                            .finally(() => {
+                                loadedCount++;
+                                console.log(`Loaded ${loadedCount}/${filesToLoad.length}: ${file.name}`);
+                                if (loadedCount === filesToLoad.length) {
+                                    console.log("All files loaded, hiding loader and fitting bounds.");
+                                    hideLoader();
+                                    if (!isSpecificPacket && allLayersGroup.getLayers().length > 0) {
+                                        map.fitBounds(allLayersGroup.getBounds(), { padding: [30, 30] });
+                                    }
                                 }
                             });
-
-                            layer.addTo(map);
-                            layerControl.addOverlay(layer, targetDisplayName ? `Fokus: ${targetDisplayName}` : `Area ${file.name}`);
-
-                            if (targetDisplayName && geojsonData.features.length > 0) {
-                                const bounds = layer.getBounds();
-                                if (bounds.isValid()) map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
-                            }
-                        });
-                });
-
+                    }); // end of filesToLoad.forEach
+                
                 if (hasSheetData) {
                     const legend = L.control({ position: 'bottomright' });
                     legend.onAdd = () => {
@@ -650,8 +540,8 @@
                     };
                     legend.addTo(map);
                 }
-            });
-        });
+            }); // end of fetch(statusUrl).then(sheetData => {...})
+        }); // end of DOMContentLoaded
 
         window.toggleSidebar = function() {
             const sidebar = document.getElementById('sidebar');

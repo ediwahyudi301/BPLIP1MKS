@@ -60,7 +60,7 @@ def get_sulsel_master_summary():
             elif ',' in s:
                 # Hanya koma -> koma sebagai desimal: 326,86
                 s = s.replace(',', '.')
-            # Titik saja -> standar desimal (187.00) — biarkan apa adanya
+            # Titik saja -> standar desimal (187.00) - biarkan apa adanya
             try:
                 return float(s)
             except (ValueError, TypeError):
@@ -179,8 +179,9 @@ def fetch_dashboard_data():
                     region_data['realized'] = master_sulsel['realized']
                     region_data['status'] = 'Konstruksi' if master_sulsel['realized'] > 0 else 'Penayangan'
             else:
-                # Menghitung Baris Paket Proyek Aktif
-                active_projects += 1
+                # Menghitung Baris Paket Proyek Aktif (Hanya untuk wilayah aktif: Sulsel & Sulteng)
+                if current_region and ("Sulawesi Selatan" in current_region or "Sulawesi Tengah" in current_region):
+                    active_projects += 1
                 
                 # Logika Status Penayangan berdasarkan Kesimpulan (untuk wilayah non-master)
                 if not ("Sulawesi Selatan" in str(current_region)):
@@ -208,6 +209,14 @@ def fetch_dashboard_data():
         # Menambahkan data wilayah terakhir ke array
         if region_data:
             regional_status.append(region_data)
+            
+        # Tampilkan kembali semua wilayah (Sulsel, Sulbar, Sulteng, Sultra)
+        allowed_regions = ["Sulawesi Selatan", "Sulawesi Tengah", "Sulawesi Barat", "Sulawesi Tenggara"]
+        regional_status = [r for r in regional_status if any(ar in r['region'] for ar in allowed_regions)]
+        
+        # Hitung ulang active_projects hanya untuk wilayah yang diperbolehkan
+        # Namun karena active_projects dihitung di dalam loop di atas, 
+        # kita perlu logika filter di dalam loop tersebut.
             
         # Calculate overall dashboard totals properly
         # total_realized = sum(r['realized'] for r in regional_status) # Dihapus sementara
@@ -804,8 +813,48 @@ PETAK_SHEET_MAPPING = {
     'sulsel_3': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS6fOtv-P_JhyRjTIMEpFsfwP2AvR0nsUho4Nf4cvfYnfu8-DjZlYRhFj8ZbTymumqUiwIWdve3qIsR/pub?gid=1143415810&single=true&output=csv',
     'sulsel_4': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS6fOtv-P_JhyRjTIMEpFsfwP2AvR0nsUho4Nf4cvfYnfu8-DjZlYRhFj8ZbTymumqUiwIWdve3qIsR/pub?gid=8251783&single=true&output=csv',
     'sulsel_5': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS6fOtv-P_JhyRjTIMEpFsfwP2AvR0nsUho4Nf4cvfYnfu8-DjZlYRhFj8ZbTymumqUiwIWdve3qIsR/pub?gid=1413155599&single=true&output=csv',
-    # Tambahkan paket lain di sini
+    # Mapping untuk Sulawesi Tengah (Ganti URL dengan link CSV spreadsheet yang sesuai)
+    'sulteng_1': '',
+    'sulteng_2': '',
+    'sulteng_3': '',
+    'sulteng_4': '',
+    'sulteng_5': '',
+    'sulteng_6': '',
+    'sulteng_7': '',
+    'sulteng_8': '',
+    'sulteng_9': '',
+    'sulteng_10': '',
+    'sulteng_11': '',
 }
+
+@app.route('/api/petak_data/all')
+def api_petak_data_all():
+    """Menggabungkan data dari semua spreadsheet petak untuk tampilan overview."""
+    try:
+        all_data = {}
+        for paket_id, url in PETAK_SHEET_MAPPING.items():
+            if not url: continue
+            try:
+                resp = requests.get(url, timeout=5)
+                if resp.status_code == 200:
+                    df = pd.read_csv(io.StringIO(resp.text))
+                    df.columns = [c.strip() for c in df.columns]
+                    key_col = 'NO_PETAK' if 'NO_PETAK' in df.columns else ('N_PETAK' if 'N_PETAK' in df.columns else None)
+                    if key_col:
+                        # Ambil kolom status
+                        status_cols = ['LAND_CLEARING', 'LAND_LEVELLING', 'OLAH_LAHAN']
+                        available_status = [c for c in status_cols if c in df.columns]
+                        for _, row in df.iterrows():
+                            petak_id = str(row[key_col]).strip()
+                            if petak_id:
+                                d = {}
+                                for c in available_status: d[c] = str(row[c]).strip()
+                                all_data[petak_id] = d
+            except:
+                continue
+        return jsonify(all_data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 # Kolom yang ada di GeoJSON (tidak perlu ditampilkan ulang)
 GEOJSON_COLS = {'KABUPATEN', 'KECAMATAN', 'DESA_KEL', 'POKTAN', 'KET_POKTAN',
