@@ -352,7 +352,7 @@
 
             function getStatusColor(sheetData) {
                 if (!sheetData) return null;
-                const stages = ['LAND CLEARING', 'LAND LEVELLING', 'OLAH LAHAN'];
+                const stages = ['LAND_CLEARING', 'LAND_LEVELLING', 'OLAH_LAHAN'];
                 const done = stages.filter(s => {
                     const val = (sheetData[s] || '').toLowerCase();
                     return ['sudah', 'selesai', 'done', 'ya', 'yes'].includes(val);
@@ -402,30 +402,51 @@
                 let filesToLoad = geojsonFiles;
                 let isSpecificPacket = false;
 
-                if (paketId && paketId.startsWith('sulsel_')) {
-                    const nomor = paketId.split('_')[1];
-                    filesToLoad = [
-                        { 
-                            name: `Paket Sulsel ${nomor}`, 
-                            path: `/static/DATA_CSR/SULSEL_PAKET_${nomor}.geojson`,
-                            isFallback: true,
-                            fallbackPath: "{{ url_for('static', filename='DATA_CSR/SULAWESI_SELATAN.geojson') }}"
-                        }
-                    ];
-                    isSpecificPacket = true;
+                const provConfig = {
+                    'sulsel': { name: 'Sulawesi Selatan', prefix: 'SULSEL', full: 'SULAWESI_SELATAN.geojson' },
+                    'sulbar': { name: 'Sulawesi Barat', prefix: 'SULBAR', full: 'SULAWESI_BARAT.geojson' },
+                    'sulteng': { name: 'Sulawesi Tengah', prefix: 'SULTENG', full: 'SULAWESI_TENGAH.geojson' },
+                    'sultra': { name: 'Sulawesi Tenggara', prefix: 'SULTRA', full: 'SULAWESI_TENGGARA.geojson' }
+                };
+
+                if (paketId) {
+                    const parts = paketId.split('_');
+                    const provKey = parts[0];
+                    const nomor = parts[1];
+                    const config = provConfig[provKey];
+                    
+                    if (config) {
+                        filesToLoad = [
+                            { 
+                                name: `Paket ${config.name} ${nomor}`, 
+                                path: `/static/DATA_CSR/${config.prefix}_PAKET_${nomor}.geojson`,
+                                isFallback: true,
+                                fallbackPath: `/static/DATA_CSR/${config.full}`
+                            }
+                        ];
+                        isSpecificPacket = true;
+                    }
                 }
-                // Anda bisa tambahkan logika serupa untuk provinsi lain (sulbar, sulteng, dll) jika sudah ada filenya.
 
                 filesToLoad.forEach((file, index) => {
                     fetch(file.path)
                         .then(r => {
-                            if (!r.ok && file.isFallback) {
-                                // Jika file per-paket tidak ketemu, pakai file besar (provinsi)
-                                return fetch(file.fallbackPath).then(res => res.json());
+                            if (!r.ok) {
+                                if (file.isFallback) {
+                                    console.warn(`File paket ${file.path} tidak ditemukan, mencoba fallback ke ${file.fallbackPath}`);
+                                    return fetch(file.fallbackPath).then(res => res.json());
+                                }
+                                throw new Error(`HTTP error! status: ${r.status}`);
                             }
                             return r.json();
                         })
+                        .catch(err => {
+                            console.error(`Gagal memuat GeoJSON (${file.name}):`, err);
+                            // Sembunyikan loading jika ada (meskipun tidak ada overlay formal, ini mencegah hang)
+                            return null; 
+                        })
                         .then(data => {
+                            if (!data) return;
                             let geojsonData = data;
                             if (targetNormalized) {
                                 geojsonData = {
@@ -475,96 +496,83 @@
                                     let popupContent = '';
 
                                     if (paketId) {
-                                        // ── Merge properties with de-duplication ────────────────
-                                        let combined = { ...props };
-                                        if (pData) {
-                                            // Map administrative fields from spreadsheet to GIS keys if they exist
-                                            // Priority: Spreadsheet > GeoJSON
-                                            const adminMap = {
-                                                'PROVINSI': 'WADMPR',
-                                                'KABUPATEN': 'WADMKK',
-                                                'KECAMATAN': 'WADMKC',
-                                                'DESA': 'WADMKD',
-                                                'DESA/KELURAHAN': 'WADMKD',
-                                                'DESA_KELURAHAN': 'WADMKD',
-                                                'DESA_KEL': 'WADMKD',
-                                                'KETUA POKTAN': 'K_POKTAN',
-                                                'K_POKTAN': 'K_POKTAN',
-                                                'PEMILIK': 'NAMA_PEMIL',
-                                                'NAMA_PEMILIK': 'NAMA_PEMIL',
-                                                'LUAS_HA': 'LUAS',
-                                                'LUAS': 'LUAS',
-                                                'NO HP': 'NO_HP',
-                                                'NO_HP': 'NO_HP',
-                                                'NO_HP1': 'NO_HP',
-                                                'NO_HP_1': 'NO_HP',
-                                                'NO_PETAK': 'N_PETAK',
-                                                'N_PETAK': 'N_PETAK'
-                                            };
+                                        // ── Normalize and Merge properties ────────────────
+                                        const keyMapping = {
+                                            'WADMPR': 'PROVINSI', 'PROVINSI': 'PROVINSI',
+                                            'WADMKK': 'KABUPATEN', 'KABUPATEN': 'KABUPATEN',
+                                            'WADMKC': 'KECAMATAN', 'KECAMATAN': 'KECAMATAN',
+                                            'WADMKD': 'DESA', 'DESA_KEL': 'DESA', 'DESA': 'DESA',
+                                            'N_PETAK': 'N_PETAK', 'NO_PETAK': 'N_PETAK',
+                                            'K_POKTAN': 'K_POKTAN', 'KET_POKTAN': 'K_POKTAN',
+                                            'NAMA_PEMIL': 'NAMA_PEMIL', 'NAMA_PEMILIK': 'NAMA_PEMIL',
+                                            'LUAS_HA': 'LUAS', 'LUAS': 'LUAS', 'LUAS_Ha': 'LUAS',
+                                            'NO_HP': 'NO_HP', 'NO_HP_1': 'NO_HP', 'NO_HP1': 'NO_HP',
+                                            'P_SID': 'SID', 'SID': 'SID'
+                                        };
 
-                                            Object.entries(pData).forEach(([k, v]) => { 
+                                        let combined = {};
+                                        // 1. From GeoJSON
+                                        Object.entries(props).forEach(([k, v]) => {
+                                            const normKey = keyMapping[k] || k.toUpperCase();
+                                            combined[normKey] = v;
+                                        });
+                                        // 2. From Spreadsheet (Override)
+                                        if (pData) {
+                                            Object.entries(pData).forEach(([k, v]) => {
                                                 const upperK = k.toUpperCase().replace(/\s/g, '_');
-                                                // Check exact match or normalized upper version
-                                                const targetKey = adminMap[k] || adminMap[upperK];
-                                                if (targetKey) {
-                                                    combined[targetKey] = v;
-                                                } else {
-                                                    combined[k] = v; 
-                                                }
+                                                const normKey = keyMapping[upperK] || upperK;
+                                                combined[normKey] = v;
                                             });
                                         }
 
-                                        let itemsHtml = '';
-                                        const stages = ['LAND CLEARING', 'LAND LEVELLING', 'OLAH LAHAN'];
-                                        
-                                        // Mapping for human-readable labels
                                         const labelMap = {
-                                            'P_SID': 'SID',
+                                            'SID': 'SID',
                                             'PENGAWAS': 'PENGAWAS',
-                                            'WADMPR': 'Provinsi',
-                                            'WADMKK': 'Kabupaten',
-                                            'WADMKC': 'Kecamatan',
-                                            'WADMKD': 'Desa',
+                                            'PROVINSI': 'Provinsi',
+                                            'KABUPATEN': 'Kabupaten',
+                                            'KECAMATAN': 'Kecamatan',
+                                            'DESA': 'Desa',
                                             'N_PETAK': 'Nomor Petak',
                                             'POKTAN': 'Kelompok Tani',
                                             'K_POKTAN': 'Ketua Poktan',
                                             'NAMA_PEMIL': 'Nama Pemilik',
                                             'NO_HP': 'Nomor HP',
                                             'LUAS': 'Luas (Ha)',
+                                            'LAND_CLEARING': 'LAND CLEARING',
+                                            'LAND_LEVELLING': 'LAND LEVELLING',
+                                            'OLAH_LAHAN': 'OLAH LAHAN',
                                             'KENDALA': 'KENDALA'
                                         };
 
-                                        // Specific order requested by the user
                                         const priority = [
-                                            'P_SID', 'PENGAWAS', 'WADMPR', 'WADMKK', 'WADMKC', 'WADMKD', 
+                                            'SID', 'PENGAWAS', 'PROVINSI', 'KABUPATEN', 'KECAMATAN', 'DESA', 
                                             'N_PETAK', 'POKTAN', 'K_POKTAN', 'NAMA_PEMIL', 
-                                            'NO_HP', 'LUAS', 'LAND CLEARING', 'LAND LEVELLING', 'OLAH LAHAN', 'KENDALA'
+                                            'NO_HP', 'LUAS', 'LAND_CLEARING', 'LAND_LEVELLING', 'OLAH_LAHAN', 'KENDALA'
                                         ];
-                                        
-                                        const allKeys = Object.keys(combined);
-                                        const sortedKeys = allKeys.sort((a, b) => {
-                                            const idxA = priority.indexOf(a), idxB = priority.indexOf(b);
-                                            if (idxA !== -1 && idxB !== -1) return idxA - idxB;
-                                            if (idxA !== -1) return -1;
-                                            if (idxB !== -1) return 1;
-                                            return a.localeCompare(b);
-                                        });
-
-                                        sortedKeys.forEach(k => {
-                                            if (k === 'PAKET' || k === 'OBJECTID') return;
-                                            if (!priority.includes(k) && !stages.includes(k)) return;
-
-                                            const val = (combined[k] !== null && combined[k] !== undefined && combined[k] !== '') ? combined[k] : '-';
-                                            const isStage = stages.includes(k);
-                                            const displayLabel = labelMap[k] || k.replace(/_/g, ' ');
-                                            
-                                            itemsHtml += `
-                                                <div class="flex justify-between items-start py-2 border-b border-slate-100 last:border-0 gap-3 px-1">
-                                                    <span class="text-slate-400 font-medium text-[10px] uppercase tracking-wider shrink-0 mt-0.5">${displayLabel}</span>
-                                                    <span class="text-right">
-                                                        ${isStage ? statusBadge(val) : `<span class="text-slate-700 text-xs font-semibold break-words">${val}</span>`}
-                                                    </span>
-                                                </div>`;
+                                        let itemsHtml = '';
+                                        priority.forEach(key => {
+                                            const val = combined[key];
+                                            if (val !== undefined && val !== null && val !== '') {
+                                                const label = labelMap[key] || key;
+                                                const isStatus = ['LAND_CLEARING', 'LAND_LEVELLING', 'OLAH_LAHAN'].includes(key);
+                                                
+                                                if (isStatus) {
+                                                    const isDone = String(val).toLowerCase().includes('selesai');
+                                                    itemsHtml += `
+                                                        <div class="flex items-center justify-between py-1.5 border-b border-slate-100 last:border-0">
+                                                            <span class="text-[10px] text-slate-500 font-medium">${label}</span>
+                                                            <span class="px-2 py-0.5 rounded text-[9px] font-bold ${isDone ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}">
+                                                                ${val}
+                                                            </span>
+                                                        </div>`;
+                                                } else {
+                                                    itemsHtml += `
+                                                        <div class="flex flex-col py-1.5 border-b border-slate-100 last:border-0">
+                                                            <span class="text-[9px] text-slate-400 uppercase tracking-wider font-bold mb-0.5">${label}</span>
+                                                            <span class="text-xs text-slate-700 font-semibold leading-tight">${val}</span>
+                                                        </div>`;
+                                                }
+                                            }
                                         });
 
                                         const title = props.PAKET || 'Detail Polygon';
