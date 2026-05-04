@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Paket Sulawesi Selatan - Cetak Sawah</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* ===== BASE TYPOGRAPHY ===== */
+        body {
+            font-family: 'Inter', 'Plus Jakarta Sans', sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #334155;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ===== CARDS ===== */
+        .soft-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(226, 232, 240, 0.7);
+            box-shadow: 0 4px 24px 0 rgba(100, 116, 139, 0.06);
+        }
+
+        .table-container {
+            border-radius: 1.5rem;
+            overflow: hidden;
+            border: 1px solid #f1f5f9;
+        }
+
+        /* ===== BADGE COLORS ===== */
+        .bg-soft-emerald {
+            background-color: #f0fdf4;
+            color: #166534;
+        }
+
+        .bg-soft-rose {
+            background-color: #fff1f2;
+            color: #be123c;
+        }
+
+        .bg-soft-blue {
+            background-color: #eff6ff;
+            color: #1d4ed8;
+        }
+
+        /* ===== TABLE TYPOGRAPHY ===== */
+        .tbl-no {
+            font-size: 13px;
+            font-weight: 600;
+            color: #94a3b8;
+        }
+
+        .tbl-paket {
+            font-size: 13.5px;
+            font-weight: 600;
+            color: #1e293b;
+            letter-spacing: -0.01em;
+        }
+
+        .tbl-penyedia {
+            font-size: 12.5px;
+            font-weight: 400;
+            color: #64748b;
+        }
+
+        .tbl-harga {
+            font-size: 13px;
+            font-weight: 500;
+            color: #334155;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .tbl-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+        }
+
+        /* ===== PAGE HEADER ===== */
+        .page-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #1e293b;
+            letter-spacing: -0.02em;
+        }
+
+        .page-subtitle {
+            font-size: 12.5px;
+            font-weight: 400;
+            color: #94a3b8;
+            margin-top: 2px;
+        }
+
+        /* ===== THEAD ===== */
+        thead tr th {
+            font-size: 11px;
+            font-weight: 600;
+            color: #94a3b8;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+    </style>
+
+</head>
+
+<body class="bg-slate-50 text-slate-800 font-inter antialiased">
+    <div class="flex h-screen overflow-hidden">
+
+        <!-- Sidebar -->
+        <aside class="w-64 bg-slate-900 text-white flex flex-col transition-all duration-300 shadow-2xl z-20">
+            <div class="p-5 flex flex-col items-center justify-center border-b border-slate-800 text-center gap-3">
+                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" class="w-12 h-12 object-contain"
+                    onerror="this.style.display='none'">
+                <h1 class="text-[11px] font-bold tracking-wider leading-snug">
+                    BALAI PENGELOLAAN LAHAN IRIGASI PERTANIAN<br><span
+                        class="text-green-400 text-[10px] mt-1 inline-block">KELAS 1 MAKASSAR</span>
+                </h1>
+            </div>
+            <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto custom-scrollbar" id="sidebar-nav">
+                <a href="{{ url_for('index') }}"
+                    class="flex items-center px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition">
+                    <i class="fa-solid fa-chart-pie w-6"></i>
+                    <span class="font-semibold ml-3">Dashboard</span>
+                </a>
+                <a href="{{ url_for('peta') }}"
+                    class="flex items-center px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition">
+                    <i class="fa-solid fa-map-location-dot w-6"></i>
+                    <span class="font-semibold ml-3">SID Tersedia</span>
+                </a>
+
+                <!-- Laporan Section with Dropdown -->
+                <div class="relative">
+                    <button type="button" onclick="toggleDropdown('dropdown-laporan')"
+                        class="w-full flex items-center justify-between px-4 py-3 text-white bg-slate-800 rounded-xl transition focus:outline-none">
+                        <div class="flex items-center">
+                            <i class="fa-solid fa-clipboard-list w-6 text-left text-emerald-400"></i>
+                            <span class="font-semibold ml-3">Laporan</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300 rotate-180"
+                            id="icon-dropdown-laporan"></i>
+                    </button>
+
+                    <div id="dropdown-laporan" class="flex flex-col pl-12 pr-4 py-2 space-y-3">
+                        <!-- A. Sulawesi Selatan -->
+                        <div>
+                            <button type="button" onclick="toggleDropdown('dropdown-sulsel', event)"
+                                class="w-full flex items-center justify-between py-1 text-sm font-medium text-white transition focus:outline-none">
+                                <span>A. Sulawesi Selatan</span>
+                                <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-300 rotate-180"
+                                    id="icon-dropdown-sulsel"></i>
+                            </button>
+                            <div id="dropdown-sulsel"
+                                class="flex flex-col pl-4 mt-2 space-y-2 border-l border-slate-700/50">
+                                <!-- Master Link for Sulsel -->
+                                <div class="mb-2">
+                                    <a href="{{ url_for('master_sulsel') }}"
+                                        class="flex items-center py-2 px-3 bg-emerald-500 text-white rounded-lg text-xs font-bold transition shadow-lg shadow-emerald-500/20">
+                                        <i class="fa-solid fa-table-list mr-2"></i>
+                                        MASTER PAKET SULSEL
+                                    </a>
+                                </div>
+                                {% for i in range(1, 25) %}
+                                <div>
+                                    <button type="button" onclick="toggleDropdown('dropdown-sulsel-{{i}}', event)"
+                                        class="w-full flex items-center justify-between py-1 text-xs text-slate-400 hover:text-white transition focus:outline-none">
+                                        <span>{{i}}. Paket Sulawesi Selatan {{i}}</span>
+                                        <i class="fa-solid fa-chevron-down text-[8px] transition-transform duration-300"
+                                            id="icon-dropdown-sulsel-{{i}}"></i>
+                                    </button>
+                                    <div id="dropdown-sulsel-{{i}}"
+                                        class="hidden flex-col pl-4 mt-1 space-y-1 border-l border-slate-700/50">
+                                        <a href="{{ url_for('laporan') }}?paket=sulsel_{{i}}"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Laporan</a>
+                                        <a href="{{ url_for('kurva_s') }}?paket=sulsel_{{i}}"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Kurva S</a>
+                                        <a href="{{ url_for('peta') }}?paket=sulsel_{{i}}"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Lokasi</a>
+                                        <a href="{{ url_for('realisasi') }}?paket=sulsel_{{i}}&minggu=1"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Realisasi</a>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- B. Sulawesi Barat -->
+                        <div>
+                            <button type="button" onclick="toggleDropdown('dropdown-sulbar', event)"
+                                class="w-full flex items-center justify-between py-1 text-sm font-medium text-slate-300 hover:text-white transition focus:outline-none">
+                                <span>B. Sulawesi Barat</span>
+                                <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-300"
+                                    id="icon-dropdown-sulbar"></i>
+                            </button>
+                            <div id="dropdown-sulbar"
+                                class="hidden flex-col pl-4 mt-2 space-y-2 border-l border-slate-700/50">
+                                {% for i in range(1, 5) %}
+                                <div>
+                                    <button type="button" onclick="toggleDropdown('dropdown-sulbar-{{i}}', event)"
+                                        class="w-full flex items-center justify-between py-1 text-xs text-slate-400 hover:text-white transition focus:outline-none">
+                                        <span>{{i}}. Paket Sulawesi Barat {{i}}</span>
+                                        <i class="fa-solid fa-chevron-down text-[8px] transition-transform duration-300"
+                                            id="icon-dropdown-sulbar-{{i}}"></i>
+                                    </button>
+                                    <div id="dropdown-sulbar-{{i}}"
+                                        class="hidden flex-col pl-4 mt-1 space-y-1 border-l border-slate-700/50">
+                                        <a href="#"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Laporan</a>
+                                        <a href="{{ url_for('kurva_s') }}?paket=sulbar_{{i}}"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Kurva S</a>
+                                        <a href="{{ url_for('peta') }}?paket=sulbar_{{i}}"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Lokasi</a>
+                                        <a href="{{ url_for('realisasi') }}?paket=sulbar_{{i}}&minggu=1"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Realisasi</a>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+            <div class="p-4 border-t border-slate-800 text-sm text-slate-500 text-center">
+                Monev System v1.0
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col relative overflow-y-auto bg-slate-50">
+            <!-- Header -->
+            <header
+                class="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-10 px-8 py-6 flex justify-between items-center border-b border-slate-100">
+                <div>
+                    <h2 class="page-title">Master Paket Sulawesi Selatan</h2>
+                    <p class="page-subtitle">Rekapitulasi Data Konstruksi Cetak Sawah 2026</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div
+                        class="px-4 py-2 bg-emerald-50 text-emerald-700 rounded-full text-xs font-bold border border-emerald-100 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        Live Spreadsheet Data
+                    </div>
+                </div>
+            </header>
+
+            <div class="p-8 max-w-[1400px] mx-auto w-full">
+                <!-- Summary Section (Soft Cards) -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="soft-card p-6 rounded-[2rem] border border-white">
+                        <div class="flex items-center gap-4">
+                            <div
+                                class="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
+                                <i class="fa-solid fa-box-archive text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Total Paket</p>
+                                <h3 id="total-paket" class="text-2xl font-bold text-slate-800">--</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="soft-card p-6 rounded-[2rem] border border-white">
+                        <div class="flex items-center gap-4">
+                            <div
+                                class="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+                                <i class="fa-solid fa-money-bill-wave text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Total Anggaran</p>
+                                <h3 id="total-anggaran" class="text-xl font-bold text-slate-800">Rp --</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="soft-card p-6 rounded-[2rem] border border-white">
+                        <div class="flex items-center gap-4">
+                            <div
+                                class="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600">
+                                <i class="fa-solid fa-chart-line text-xl"></i>
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Rata-rata Progres
+                                </p>
+                                <h3 id="avg-progres" class="text-2xl font-bold text-slate-800">--%</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table Section -->
+                <div class="soft-card rounded-[2.5rem] p-4 border border-white shadow-sm overflow-hidden">
+                    <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                        <h4 class="font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-list-check text-emerald-500"></i>
+                            Daftar Paket Konstruksi
+                        </h4>
+                        <div class="relative">
+                            <input type="text" id="search-input" placeholder="Cari paket atau penyedia..."
+                                class="pl-10 pr-4 py-2 bg-slate-100 border-none rounded-full text-sm w-64 focus:ring-2 focus:ring-emerald-500 transition-all outline-none">
+                            <i
+                                class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-separate border-spacing-y-2 px-4">
+                            <thead>
+                                <tr class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">
+                                    <th class="py-4 px-4 text-center w-12">No</th>
+                                    <th class="py-4 px-4">Nama Paket</th>
+                                    <th class="py-4 px-4">Penyedia Jasa</th>
+                                    <th class="py-4 px-4 text-right">Nilai Kontrak</th>
+                                    <th class="py-4 px-4 text-center">Rencana (%)</th>
+                                    <th class="py-4 px-4 text-center">Realisasi (%)</th>
+                                    <th class="py-4 px-4 text-center">Deviasi (%)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="master-table-body">
+                                <!-- Loading State -->
+                                <tr>
+                                    <td colspan="7" class="py-20 text-center">
+                                        <div class="flex flex-col items-center gap-4">
+                                            <div
+                                                class="w-12 h-12 border-4 border-emerald-100 border-t-emerald-500 rounded-full animate-spin">
+                                            </div>
+                                            <p class="text-slate-400 font-medium">Sedang memuat data dari master
+                                                sheet...</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchData();
+
+            document.getElementById('search-input').addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase();
+                const rows = document.querySelectorAll('#master-table-body tr');
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(term) ? '' : 'none';
+                });
+            });
+        });
+
+        // Function for Sidebar Accordions
+        window.toggleDropdown = function (id, event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            const el = document.getElementById(id);
+            const icon = document.getElementById('icon-' + id);
+            if (!el) return;
+
+            if (el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+                el.classList.add('flex');
+                if (icon) icon.classList.add('rotate-180');
+            } else {
+                el.classList.add('hidden');
+                el.classList.remove('flex');
+                if (icon) icon.classList.remove('rotate-180');
+            }
+        };
+
+        async function fetchData() {
+            try {
+                const res = await fetch('/api/master_sulsel');
+                const data = await res.json();
+
+                if (data.error) throw new Error(data.error);
+
+                renderTable(data);
+                updateSummary(data);
+            } catch (err) {
+                console.error(err);
+                document.getElementById('master-table-body').innerHTML = `
+                    <tr>
+                        <td colspan="7" class="py-20 text-center">
+                            <div class="text-rose-500 font-bold">Gagal memuat data: ${err.message}</div>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('master-table-body');
+            tbody.innerHTML = '';
+
+            data.forEach(item => {
+                const devNum = parseFloat(item.deviasi.replace(',', '.')) || 0;
+                const devColor = devNum < 0 ? 'bg-soft-rose text-rose-600' : (devNum > 0 ? 'bg-soft-emerald text-emerald-600' : 'bg-slate-100 text-slate-600');
+
+                const tr = document.createElement('tr');
+                tr.className = "group hover:translate-y-[-2px] transition-all duration-300";
+                tr.innerHTML = `
+                    <td class="py-4 px-4 text-center bg-white rounded-l-[1.5rem] border-y border-l border-slate-50">
+                        <span class="tbl-no">${item.no}</span>
+                    </td>
+                    <td class="py-4 px-4 bg-white border-y border-slate-50">
+                        <div class="tbl-paket group-hover:text-emerald-600 transition-colors">${item.paket}</div>
+                    </td>
+                    <td class="py-4 px-4 bg-white border-y border-slate-50">
+                        <div class="tbl-penyedia">${item.penyedia}</div>
+                    </td>
+                    <td class="py-4 px-4 bg-white border-y border-slate-50 text-right">
+                        <div class="tbl-harga">${item.harga}</div>
+                    </td>
+                    <td class="py-4 px-4 bg-white border-y border-slate-50 text-center">
+                        <span class="tbl-badge bg-slate-100 text-slate-500">${item.rencana}</span>
+                    </td>
+                    <td class="py-4 px-4 bg-white border-y border-slate-50 text-center">
+                        <span class="tbl-badge bg-soft-blue">${item.realisasi}</span>
+                    </td>
+                    <td class="py-4 px-4 bg-white border-y border-r border-slate-50 rounded-r-[1.5rem] text-center">
+                        <span class="tbl-badge ${devColor}">${item.deviasi}</span>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateSummary(data) {
+            document.getElementById('total-paket').innerText = data.length;
+
+            let totalHarga = 0;
+            let totalReal = 0;
+
+            data.forEach(item => {
+                const hargaNum = parseFloat(item.harga.replace(/[^0-9,]/g, '').replace(',', '.')) || 0;
+                totalHarga += hargaNum;
+
+                const realNum = parseFloat(item.realisasi.replace(',', '.')) || 0;
+                totalReal += realNum;
+            });
+
+            const formatter = new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            });
+
+            document.getElementById('total-anggaran').innerText = formatter.format(totalHarga);
+            document.getElementById('avg-progres').innerText = (data.length > 0 ? (totalReal / data.length).toFixed(2) : '0') + '%';
+        }
+    </script>
+</body>
+
+</html>

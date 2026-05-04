@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,57 +15,87 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
+
 <body class="bg-slate-50 text-slate-800 font-inter antialiased">
     <div class="flex h-screen overflow-hidden">
-        
+
         <!-- Sidebar -->
         <aside class="w-64 bg-slate-900 text-white flex flex-col transition-all duration-300 shadow-2xl z-20">
             <div class="p-5 flex flex-col items-center justify-center border-b border-slate-800 text-center gap-3">
-                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" class="w-12 h-12 object-contain" onerror="this.style.display='none'">
+                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" class="w-12 h-12 object-contain"
+                    onerror="this.style.display='none'">
                 <h1 class="text-[11px] font-bold tracking-wider leading-snug">
-                    BALAI PENGELOLAAN LAHAN IRIGASI PERTANIAN<br><span class="text-green-400 text-[10px] mt-1 inline-block">KELAS 1 MAKASSAR</span>
+                    BALAI PENGELOLAAN LAHAN IRIGASI PERTANIAN<br><span
+                        class="text-green-400 text-[10px] mt-1 inline-block">KELAS 1 MAKASSAR</span>
                 </h1>
             </div>
             <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto custom-scrollbar" id="sidebar-nav">
-                <a href="{{ url_for('index') }}" class="flex items-center px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition">
+                <a href="{{ url_for('index') }}"
+                    class="flex items-center px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition">
                     <i class="fa-solid fa-chart-pie w-6"></i>
                     <span class="font-semibold ml-3">Dashboard</span>
                 </a>
-                <a href="{{ url_for('peta') }}" class="flex items-center px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition">
+                <a href="{{ url_for('peta') }}"
+                    class="flex items-center px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition">
                     <i class="fa-solid fa-map-location-dot w-6"></i>
-                    <span class="font-semibold ml-3">Peta Lokasi</span>
+                    <span class="font-semibold ml-3">SID Tersedia</span>
                 </a>
-                
+
                 <!-- Laporan Section with Dropdown -->
                 <div class="relative">
                     <!-- Set open by default if it's the active section -->
-                    <button type="button" onclick="toggleDropdown('dropdown-laporan')" class="w-full flex items-center justify-between px-4 py-3 bg-slate-800 text-white rounded-xl transition focus:outline-none">
+                    <button type="button" onclick="toggleDropdown('dropdown-laporan')"
+                        class="w-full flex items-center justify-between px-4 py-3 bg-slate-800 text-white rounded-xl transition focus:outline-none">
                         <div class="flex items-center">
                             <i class="fa-solid fa-clipboard-list w-6 text-left text-indigo-400"></i>
                             <span class="font-semibold ml-3">Laporan</span>
                         </div>
-                        <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300 rotate-180" id="icon-dropdown-laporan"></i>
+                        <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300 rotate-180"
+                            id="icon-dropdown-laporan"></i>
                     </button>
-                    
+
                     <div id="dropdown-laporan" class="flex flex-col pl-12 pr-4 py-2 space-y-3">
                         <!-- A. Sulawesi Selatan -->
                         <div>
                             <!-- Assuming Sulsel is active if paket starts with sulsel -->
-                            <button type="button" onclick="toggleDropdown('dropdown-sulsel', event)" class="w-full flex items-center justify-between py-1 text-sm font-medium {% if paket.startswith('sulsel') %}text-white{% else %}text-slate-300{% endif %} hover:text-white transition focus:outline-none">
+                            <button type="button" onclick="toggleDropdown('dropdown-sulsel', event)"
+                                class="w-full flex items-center justify-between py-1 text-sm font-medium {% if paket.startswith('sulsel') %}text-white{% else %}text-slate-300{% endif %} hover:text-white transition focus:outline-none">
                                 <span>A. Sulawesi Selatan</span>
-                                <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-300 {% if paket.startswith('sulsel') %}rotate-180{% endif %}" id="icon-dropdown-sulsel"></i>
+                                <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-300 {% if paket.startswith('sulsel') %}rotate-180{% endif %}"
+                                    id="icon-dropdown-sulsel"></i>
                             </button>
-                            <div id="dropdown-sulsel" class="{% if paket.startswith('sulsel') %}flex{% else %}hidden{% endif %} flex-col pl-4 mt-2 space-y-2 border-l border-slate-700/50">
+                            <div id="dropdown-sulsel"
+                                class="{% if paket.startswith('sulsel') %}flex{% else %}hidden{% endif %} flex-col pl-4 mt-2 space-y-2 border-l border-slate-700/50">
+                                <!-- Master Link for Sulsel -->
+                                <div class="mb-2">
+                                    <a href="{{ url_for('master_sulsel') }}"
+                                        class="flex items-center py-2 px-3 bg-emerald-500/10 text-emerald-400 rounded-lg text-xs font-bold transition hover:bg-emerald-500/20">
+                                        <i class="fa-solid fa-table-list mr-2"></i>
+                                        MASTER PAKET SULSEL
+                                    </a>
+                                </div>
                                 {% for i in range(1, 25) %}
                                 <div>
-                                    <button type="button" onclick="toggleDropdown('dropdown-sulsel-{{i}}', event)" class="w-full flex items-center justify-between py-1 text-xs {% if paket == 'sulsel_'~i %}text-white font-semibold{% else %}text-slate-400{% endif %} hover:text-white transition focus:outline-none">
+                                    <button type="button" onclick="toggleDropdown('dropdown-sulsel-{{i}}', event)"
+                                        class="w-full flex items-center justify-between py-1 text-xs {% if paket == 'sulsel_'~i %}text-white font-semibold{% else %}text-slate-400{% endif %} hover:text-white transition focus:outline-none">
                                         <span>{{i}}. Paket Sulawesi Selatan {{i}}</span>
-                                        <i class="fa-solid fa-chevron-down text-[8px] transition-transform duration-300 {% if paket == 'sulsel_'~i %}rotate-180{% endif %}" id="icon-dropdown-sulsel-{{i}}"></i>
+                                        <i class="fa-solid fa-chevron-down text-[8px] transition-transform duration-300 {% if paket == 'sulsel_'~i %}rotate-180{% endif %}"
+                                            id="icon-dropdown-sulsel-{{i}}"></i>
                                     </button>
-                                    <div id="dropdown-sulsel-{{i}}" class="{% if paket == 'sulsel_'~i %}flex{% else %}hidden{% endif %} flex-col pl-4 mt-1 space-y-1 border-l border-slate-700/50">
-                                        <a href="#" class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">- Laporan</a>
-                                        <a href="{{ url_for('kurva_s') }}?paket=sulsel_{{i}}" class="block py-1 text-xs {% if paket == 'sulsel_'~i %}text-indigo-400 font-medium{% else %}text-slate-500{% endif %} hover:text-indigo-400 transition">- Kurva S</a>
-                                        <a href="{{ url_for('peta') }}?paket=sulsel_{{i}}" class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">- Lokasi</a>
+                                    <div id="dropdown-sulsel-{{i}}"
+                                        class="{% if paket == 'sulsel_'~i %}flex{% else %}hidden{% endif %} flex-col pl-4 mt-1 space-y-1 border-l border-slate-700/50">
+                                        <a href="{{ url_for('laporan') }}?paket=sulsel_{{i}}"
+                                            class="block py-1 text-xs {% if paket == 'sulsel_'~i %}text-indigo-400 font-medium{% else %}text-slate-500{% endif %} hover:text-indigo-400 transition">-
+                                            Laporan</a>
+                                        <a href="{{ url_for('kurva_s') }}?paket=sulsel_{{i}}"
+                                            class="block py-1 text-xs {% if paket == 'sulsel_'~i %}text-indigo-400 font-medium{% else %}text-slate-500{% endif %} hover:text-indigo-400 transition">-
+                                            Kurva S</a>
+                                        <a href="{{ url_for('peta') }}?paket=sulsel_{{i}}"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Lokasi</a>
+                                        <a href="{{ url_for('realisasi') }}?paket=sulsel_{{i}}&minggu=1"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Realisasi</a>
                                     </div>
                                 </div>
                                 {% endfor %}
@@ -73,21 +104,36 @@
 
                         <!-- B. Sulawesi Barat -->
                         <div>
-                            <button type="button" onclick="toggleDropdown('dropdown-sulbar', event)" class="w-full flex items-center justify-between py-1 text-sm font-medium {% if paket.startswith('sulbar') %}text-white{% else %}text-slate-300{% endif %} hover:text-white transition focus:outline-none">
+                            <button type="button" onclick="toggleDropdown('dropdown-sulbar', event)"
+                                class="w-full flex items-center justify-between py-1 text-sm font-medium {% if paket.startswith('sulbar') %}text-white{% else %}text-slate-300{% endif %} hover:text-white transition focus:outline-none">
                                 <span>B. Sulawesi Barat</span>
-                                <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-300 {% if paket.startswith('sulbar') %}rotate-180{% endif %}" id="icon-dropdown-sulbar"></i>
+                                <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-300 {% if paket.startswith('sulbar') %}rotate-180{% endif %}"
+                                    id="icon-dropdown-sulbar"></i>
                             </button>
-                            <div id="dropdown-sulbar" class="{% if paket.startswith('sulbar') %}flex{% else %}hidden{% endif %} flex-col pl-4 mt-2 space-y-2 border-l border-slate-700/50">
+                            <div id="dropdown-sulbar"
+                                class="{% if paket.startswith('sulbar') %}flex{% else %}hidden{% endif %} flex-col pl-4 mt-2 space-y-2 border-l border-slate-700/50">
                                 {% for i in range(1, 5) %}
                                 <div>
-                                    <button type="button" onclick="toggleDropdown('dropdown-sulbar-{{i}}', event)" class="w-full flex items-center justify-between py-1 text-xs {% if paket == 'sulbar_'~i %}text-white font-semibold{% else %}text-slate-400{% endif %} hover:text-white transition focus:outline-none">
+                                    <button type="button" onclick="toggleDropdown('dropdown-sulbar-{{i}}', event)"
+                                        class="w-full flex items-center justify-between py-1 text-xs {% if paket == 'sulbar_'~i %}text-white font-semibold{% else %}text-slate-400{% endif %} hover:text-white transition focus:outline-none">
                                         <span>{{i}}. Paket Sulawesi Barat {{i}}</span>
-                                        <i class="fa-solid fa-chevron-down text-[8px] transition-transform duration-300 {% if paket == 'sulbar_'~i %}rotate-180{% endif %}" id="icon-dropdown-sulbar-{{i}}"></i>
+                                        <i class="fa-solid fa-chevron-down text-[8px] transition-transform duration-300 {% if paket == 'sulbar_'~i %}rotate-180{% endif %}"
+                                            id="icon-dropdown-sulbar-{{i}}"></i>
                                     </button>
-                                    <div id="dropdown-sulbar-{{i}}" class="{% if paket == 'sulbar_'~i %}flex{% else %}hidden{% endif %} flex-col pl-4 mt-1 space-y-1 border-l border-slate-700/50">
-                                        <a href="#" class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">- Laporan</a>
-                                        <a href="{{ url_for('kurva_s') }}?paket=sulbar_{{i}}" class="block py-1 text-xs {% if paket == 'sulbar_'~i %}text-indigo-400 font-medium{% else %}text-slate-500{% endif %} hover:text-indigo-400 transition">- Kurva S</a>
-                                        <a href="{{ url_for('peta') }}?paket=sulbar_{{i}}" class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">- Lokasi</a>
+                                    <div id="dropdown-sulbar-{{i}}"
+                                        class="{% if paket == 'sulbar_'~i %}flex{% else %}hidden{% endif %} flex-col pl-4 mt-1 space-y-1 border-l border-slate-700/50">
+                                        <a href="#"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Laporan</a>
+                                        <a href="{{ url_for('kurva_s') }}?paket=sulbar_{{i}}"
+                                            class="block py-1 text-xs {% if paket == 'sulbar_'~i %}text-indigo-400 font-medium{% else %}text-slate-500{% endif %} hover:text-indigo-400 transition">-
+                                            Kurva S</a>
+                                        <a href="{{ url_for('peta') }}?paket=sulbar_{{i}}"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Lokasi</a>
+                                        <a href="{{ url_for('realisasi') }}?paket=sulbar_{{i}}&minggu=1"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Realisasi</a>
                                     </div>
                                 </div>
                                 {% endfor %}
@@ -96,21 +142,45 @@
 
                         <!-- C. Sulawesi Tengah -->
                         <div>
-                            <button type="button" onclick="toggleDropdown('dropdown-sulteng', event)" class="w-full flex items-center justify-between py-1 text-sm font-medium {% if paket.startswith('sulteng') %}text-white{% else %}text-slate-300{% endif %} hover:text-white transition focus:outline-none">
+                            <button type="button" onclick="toggleDropdown('dropdown-sulteng', event)"
+                                class="w-full flex items-center justify-between py-1 text-sm font-medium {% if paket.startswith('sulteng') %}text-white{% else %}text-slate-300{% endif %} hover:text-white transition focus:outline-none">
                                 <span>C. Sulawesi Tengah</span>
-                                <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-300 {% if paket.startswith('sulteng') %}rotate-180{% endif %}" id="icon-dropdown-sulteng"></i>
+                                <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-300 {% if paket.startswith('sulteng') %}rotate-180{% endif %}"
+                                    id="icon-dropdown-sulteng"></i>
                             </button>
-                            <div id="dropdown-sulteng" class="{% if paket.startswith('sulteng') %}flex{% else %}hidden{% endif %} flex-col pl-4 mt-2 space-y-2 border-l border-slate-700/50">
+                            <div id="dropdown-sulteng"
+                                class="{% if paket.startswith('sulteng') %}flex{% else %}hidden{% endif %} flex-col pl-4 mt-2 space-y-2 border-l border-slate-700/50">
+                                <!-- Master Link for Sulteng -->
+                                <div class="mb-2">
+                                    <a href="{{ url_for('master_sulteng') }}"
+                                        class="flex items-center py-2 px-3 bg-emerald-500/10 text-emerald-400 rounded-lg text-xs font-bold transition hover:bg-emerald-500/20">
+                                        <i class="fa-solid fa-table-list mr-2"></i>
+                                        MASTER PAKET SULTENG
+                                    </a>
+                                </div>
+
                                 {% for i in range(1, 12) %}
                                 <div>
-                                    <button type="button" onclick="toggleDropdown('dropdown-sulteng-{{i}}', event)" class="w-full flex items-center justify-between py-1 text-xs {% if paket == 'sulteng_'~i %}text-white font-semibold{% else %}text-slate-400{% endif %} hover:text-white transition focus:outline-none">
+                                    <button type="button" onclick="toggleDropdown('dropdown-sulteng-{{i}}', event)"
+                                        class="w-full flex items-center justify-between py-1 text-xs {% if paket == 'sulteng_'~i %}text-white font-semibold{% else %}text-slate-400{% endif %} hover:text-white transition focus:outline-none">
                                         <span>{{i}}. Paket Sulawesi Tengah {{i}}</span>
-                                        <i class="fa-solid fa-chevron-down text-[8px] transition-transform duration-300 {% if paket == 'sulteng_'~i %}rotate-180{% endif %}" id="icon-dropdown-sulteng-{{i}}"></i>
+                                        <i class="fa-solid fa-chevron-down text-[8px] transition-transform duration-300 {% if paket == 'sulteng_'~i %}rotate-180{% endif %}"
+                                            id="icon-dropdown-sulteng-{{i}}"></i>
                                     </button>
-                                    <div id="dropdown-sulteng-{{i}}" class="{% if paket == 'sulteng_'~i %}flex{% else %}hidden{% endif %} flex-col pl-4 mt-1 space-y-1 border-l border-slate-700/50">
-                                        <a href="#" class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">- Laporan</a>
-                                        <a href="{{ url_for('kurva_s') }}?paket=sulteng_{{i}}" class="block py-1 text-xs {% if paket == 'sulteng_'~i %}text-indigo-400 font-medium{% else %}text-slate-500{% endif %} hover:text-indigo-400 transition">- Kurva S</a>
-                                        <a href="{{ url_for('peta') }}?paket=sulteng_{{i}}" class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">- Lokasi</a>
+                                    <div id="dropdown-sulteng-{{i}}"
+                                        class="{% if paket == 'sulteng_'~i %}flex{% else %}hidden{% endif %} flex-col pl-4 mt-1 space-y-1 border-l border-slate-700/50">
+                                        <a href="#"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Laporan</a>
+                                        <a href="{{ url_for('kurva_s') }}?paket=sulteng_{{i}}"
+                                            class="block py-1 text-xs {% if paket == 'sulteng_'~i %}text-indigo-400 font-medium{% else %}text-slate-500{% endif %} hover:text-indigo-400 transition">-
+                                            Kurva S</a>
+                                        <a href="{{ url_for('peta') }}?paket=sulteng_{{i}}"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Lokasi</a>
+                                        <a href="{{ url_for('realisasi') }}?paket=sulteng_{{i}}&minggu=1"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Realisasi</a>
                                     </div>
                                 </div>
                                 {% endfor %}
@@ -119,20 +189,32 @@
 
                         <!-- D. Sulawesi Tenggara -->
                         <div>
-                            <button type="button" onclick="toggleDropdown('dropdown-sultra', event)" class="w-full flex items-center justify-between py-1 text-sm font-medium {% if paket.startswith('sultra') %}text-white{% else %}text-slate-300{% endif %} hover:text-white transition focus:outline-none">
+                            <button type="button" onclick="toggleDropdown('dropdown-sultra', event)"
+                                class="w-full flex items-center justify-between py-1 text-sm font-medium {% if paket.startswith('sultra') %}text-white{% else %}text-slate-300{% endif %} hover:text-white transition focus:outline-none">
                                 <span>D. Sulawesi Tenggara</span>
-                                <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-300 {% if paket.startswith('sultra') %}rotate-180{% endif %}" id="icon-dropdown-sultra"></i>
+                                <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-300 {% if paket.startswith('sultra') %}rotate-180{% endif %}"
+                                    id="icon-dropdown-sultra"></i>
                             </button>
-                            <div id="dropdown-sultra" class="{% if paket.startswith('sultra') %}flex{% else %}hidden{% endif %} flex-col pl-4 mt-2 space-y-2 border-l border-slate-700/50">
+                            <div id="dropdown-sultra"
+                                class="{% if paket.startswith('sultra') %}flex{% else %}hidden{% endif %} flex-col pl-4 mt-2 space-y-2 border-l border-slate-700/50">
                                 <div>
-                                    <button type="button" onclick="toggleDropdown('dropdown-sultra-1', event)" class="w-full flex items-center justify-between py-1 text-xs {% if paket == 'sultra_1' %}text-white font-semibold{% else %}text-slate-400{% endif %} hover:text-white transition focus:outline-none">
+                                    <button type="button" onclick="toggleDropdown('dropdown-sultra-1', event)"
+                                        class="w-full flex items-center justify-between py-1 text-xs {% if paket == 'sultra_1' %}text-white font-semibold{% else %}text-slate-400{% endif %} hover:text-white transition focus:outline-none">
                                         <span>1. Paket Sulawesi Tenggara 1</span>
-                                        <i class="fa-solid fa-chevron-down text-[8px] transition-transform duration-300 {% if paket == 'sultra_1' %}rotate-180{% endif %}" id="icon-dropdown-sultra-1"></i>
+                                        <i class="fa-solid fa-chevron-down text-[8px] transition-transform duration-300 {% if paket == 'sultra_1' %}rotate-180{% endif %}"
+                                            id="icon-dropdown-sultra-1"></i>
                                     </button>
-                                    <div id="dropdown-sultra-1" class="{% if paket == 'sultra_1' %}flex{% else %}hidden{% endif %} flex-col pl-4 mt-1 space-y-1 border-l border-slate-700/50">
-                                        <a href="#" class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">- Laporan</a>
-                                        <a href="{{ url_for('kurva_s') }}?paket=sultra_1" class="block py-1 text-xs {% if paket == 'sultra_1' %}text-indigo-400 font-medium{% else %}text-slate-500{% endif %} hover:text-indigo-400 transition">- Kurva S</a>
-                                        <a href="{{ url_for('peta') }}?paket=sultra_1" class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">- Lokasi</a>
+                                    <div id="dropdown-sultra-1"
+                                        class="{% if paket == 'sultra_1' %}flex{% else %}hidden{% endif %} flex-col pl-4 mt-1 space-y-1 border-l border-slate-700/50">
+                                        <a href="#"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Laporan</a>
+                                        <a href="{{ url_for('kurva_s') }}?paket=sultra_1"
+                                            class="block py-1 text-xs {% if paket == 'sultra_1' %}text-indigo-400 font-medium{% else %}text-slate-500{% endif %} hover:text-indigo-400 transition">-
+                                            Kurva S</a>
+                                        <a href="{{ url_for('peta') }}?paket=sultra_1"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Lokasi</a>
                                     </div>
                                 </div>
                             </div>
@@ -147,15 +229,17 @@
 
         <!-- Main Content -->
         <main class="flex-1 flex flex-col relative overflow-y-auto overflow-x-hidden bg-slate-50">
-            
+
             <!-- Header -->
-            <header class="bg-white shadow-sm sticky top-0 z-10 p-4 transition-all flex justify-between items-center px-8">
+            <header
+                class="bg-white shadow-sm sticky top-0 z-10 p-4 transition-all flex justify-between items-center px-8">
                 <div>
                     <h2 class="text-2xl font-bold text-slate-800">Detail Kurva S</h2>
                     <p class="text-sm text-slate-500" id="header-paket-name">Memuat nama paket...</p>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <div class="bg-indigo-50 text-indigo-700 px-4 py-2 rounded-full font-medium text-sm flex items-center">
+                    <div
+                        class="bg-indigo-50 text-indigo-700 px-4 py-2 rounded-full font-medium text-sm flex items-center">
                         <span class="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse"></span>
                         Data Google Sheets
                     </div>
@@ -164,11 +248,97 @@
 
             <!-- Dashboard Content -->
             <div class="p-8 max-w-7xl mx-auto w-full space-y-8">
-                
+
+                <!-- Contract Info Card -->
+                <div id="contract-info-card" class="w-full mb-0 hidden">
+                    <div
+                        class="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-900 rounded-2xl p-5 shadow-xl border border-slate-700/50">
+
+                        <!-- Top: Pengawas & Logo -->
+                        <div class="flex items-center justify-between border-b border-slate-700/50 pb-3 mb-4">
+                            <div class="flex items-center gap-3">
+                                <!-- Logo Template -->
+                                <div
+                                    class="w-10 h-10 rounded-full bg-slate-800 overflow-hidden flex items-center justify-center border border-slate-600 shadow-inner shrink-0">
+                                    <!-- Replace with img tag below when logo is available -->
+                                    <!-- <img src="URL_LOGO_PENGAWAS" alt="Logo Pengawas" class="w-full h-full object-cover"> -->
+                                    <img src="{{ url_for('static', filename='img/pnup.png') }}" alt="Logo Pengawas"
+                                        class="w-full h-full object-cover bg-white">
+
+                                </div>
+                                <div>
+                                    <p class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mb-0.5">
+                                        Pengawas Konstruksi</p>
+                                    <h5 id="pengawas-name-display" class="text-white font-bold text-sm tracking-wide">--
+                                    </h5>
+                                </div>
+                            </div>
+                            <!-- Optional: Contractor/Penyedia section can be added here -->
+                        </div>
+
+                        <div class="flex flex-wrap items-center justify-between gap-4">
+                            <!-- Left: Sisa Hari Kontrak -->
+                            <div class="flex items-center gap-4">
+                                <div class="relative">
+                                    <div
+                                        class="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex flex-col items-center justify-center shadow-lg shadow-amber-500/30">
+                                        <span id="sisa-hari-number"
+                                            class="text-3xl font-black text-white leading-none">--</span>
+                                        <span
+                                            class="text-[9px] font-bold text-white/80 uppercase tracking-wider">Hari</span>
+                                    </div>
+                                    <div
+                                        class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-green-400 border-2 border-slate-900 animate-pulse">
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 class="text-white font-bold text-lg leading-tight">Sisa Waktu Kontrak</h4>
+                                    <p class="text-slate-400 text-xs mt-1">
+                                        <i class="fa-regular fa-calendar mr-1"></i>
+                                        <span id="contract-date-range">Memuat tanggal...</span>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Center: Progress Bar -->
+                            <div class="flex-1 min-w-[200px] max-w-md mx-4">
+                                <div class="flex justify-between items-center mb-1.5">
+                                    <span class="text-[11px] text-slate-400 font-medium">Progres Waktu Kontrak</span>
+                                    <span id="time-progress-pct" class="text-[11px] text-amber-400 font-bold">--%</span>
+                                </div>
+                                <div class="w-full bg-slate-700/60 rounded-full h-2.5 overflow-hidden">
+                                    <div id="time-progress-bar"
+                                        class="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500 transition-all duration-1000 ease-out"
+                                        style="width: 0%"></div>
+                                </div>
+                                <div class="flex justify-between mt-1.5">
+                                    <span id="elapsed-days-label" class="text-[10px] text-slate-500">Hari ke-0</span>
+                                    <span id="total-days-label" class="text-[10px] text-slate-500">dari 0 hari</span>
+                                </div>
+                            </div>
+
+                            <!-- Right: Detail Cards -->
+                            <div class="flex gap-3">
+                                <div class="bg-slate-700/40 rounded-xl px-4 py-2.5 border border-slate-600/30">
+                                    <span
+                                        class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold block">Mulai</span>
+                                    <span id="tanggal-mulai-display" class="text-sm text-white font-bold">--</span>
+                                </div>
+                                <div class="bg-slate-700/40 rounded-xl px-4 py-2.5 border border-slate-600/30">
+                                    <span
+                                        class="text-[10px] text-slate-400 uppercase tracking-wider font-semibold block">Berakhir</span>
+                                    <span id="tanggal-berakhir-display" class="text-sm text-white font-bold">--</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Full Width Chart Section -->
                 <div class="glass-card w-full p-6 rounded-2xl border border-slate-100 relative">
                     <!-- Loading Overlay -->
-                    <div id="loading-overlay" class="absolute inset-0 bg-white/80 z-10 flex items-center justify-center rounded-2xl backdrop-blur-sm">
+                    <div id="loading-overlay"
+                        class="absolute inset-0 bg-white/80 z-10 flex items-center justify-center rounded-2xl backdrop-blur-sm">
                         <div class="flex flex-col items-center">
                             <i class="fa-solid fa-circle-notch fa-spin text-3xl text-indigo-500 mb-3"></i>
                             <span class="text-slate-600 font-medium">Mengambil data S-Curve...</span>
@@ -177,26 +347,47 @@
 
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="text-lg font-bold text-slate-800">Progress Pelaksanaan (Target vs Realisasi)</h3>
-                        <button class="text-sm text-indigo-600 hover:text-indigo-800 font-medium transition flex items-center">
+                        <button
+                            class="text-sm text-indigo-600 hover:text-indigo-800 font-medium transition flex items-center">
                             Unduh Grafik <i class="fa-solid fa-download ml-2 text-xs"></i>
                         </button>
                     </div>
-                    
+
+                    <!-- Empty State: shown when data is not yet available -->
+                    <div id="no-data-state"
+                        class="hidden absolute inset-0 flex items-center justify-center rounded-2xl bg-white/95 backdrop-blur-sm z-10">
+                        <div class="flex flex-col items-center gap-4 max-w-sm text-center px-6">
+                            <div class="w-16 h-16 rounded-2xl bg-amber-50 flex items-center justify-center">
+                                <i class="fa-solid fa-hourglass-half text-2xl text-amber-400"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-base font-bold text-slate-700 mb-1">Data Belum Tersedia</h4>
+                                <p class="text-sm text-slate-400 leading-relaxed">Data kurva S untuk paket ini sedang
+                                    dalam proses pengisian. Halaman akan otomatis memuat data ketika tersedia.</p>
+                            </div>
+                            <div
+                                class="flex items-center gap-2 text-xs font-semibold text-amber-600 bg-amber-50 border border-amber-100 px-4 py-2 rounded-full">
+                                <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                                Dalam Proses Penyiapan Data
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="h-[500px] w-full relative">
                         <canvas id="sCurveChart"></canvas>
                     </div>
-                    
+
                     <div class="mt-6 flex items-center justify-between px-4">
                         <div class="text-sm text-slate-500">
                             Sumber Data: Google Sheets
                         </div>
                         <div class="flex gap-4 flex-wrap">
                             <div class="flex items-center">
-                                <span class="w-3 h-3 rounded-full bg-slate-300 mr-2"></span>
+                                <span class="w-3 h-3 rounded-full bg-emerald-500 mr-2"></span>
                                 <span class="text-sm text-slate-600 font-medium">Target Kumulatif (%)</span>
                             </div>
                             <div class="flex items-center">
-                                <span class="w-3 h-3 rounded-full bg-indigo-600 mr-2"></span>
+                                <span class="w-3 h-3 rounded-full bg-rose-500 mr-2"></span>
                                 <span class="text-sm text-slate-600 font-medium">Realisasi Kumulatif (%)</span>
                             </div>
                             <div class="flex items-center ml-2">
@@ -209,6 +400,54 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Kebutuhan Alat Section -->
+                <div id="equipment-info-section" class="w-full hidden">
+                    <div class="glass-card w-full p-6 rounded-2xl border border-slate-100 relative shadow-sm">
+                        <div class="flex justify-between items-center mb-6">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center">
+                                    <i class="fa-solid fa-truck-ramp-box text-indigo-600 text-lg"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-slate-800">Detail Kebutuhan Alat</h3>
+                                    <p class="text-xs text-slate-500 mt-0.5">Daftar peralatan yang dibutuhkan dan
+                                        ketersediaannya di lapangan</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto rounded-xl border border-slate-200">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50/80 border-b border-slate-200">
+                                        <th
+                                            class="py-3.5 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider w-16 text-center">
+                                            No</th>
+                                        <th
+                                            class="py-3.5 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                            Jenis Alat</th>
+                                        <th
+                                            class="py-3.5 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                            Spesifikasi</th>
+                                        <th
+                                            class="py-3.5 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center w-28">
+                                            Kebutuhan</th>
+                                        <th
+                                            class="py-3.5 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center w-28">
+                                            Tersedia</th>
+                                        <th
+                                            class="py-3.5 px-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-center w-32">
+                                            Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="equipment-table-body" class="divide-y divide-slate-100 bg-white">
+                                    <!-- Populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </main>
     </div>
@@ -216,30 +455,30 @@
     <!-- Scripts -->
     <script>
         // Function for Sidebar Accordions
-        window.toggleDropdown = function(id, event) {
-            if(event) {
+        window.toggleDropdown = function (id, event) {
+            if (event) {
                 event.preventDefault();
                 event.stopPropagation();
             }
             const el = document.getElementById(id);
             const icon = document.getElementById('icon-' + id);
             if (!el) return;
-            
+
             if (el.classList.contains('hidden')) {
                 el.classList.remove('hidden');
                 el.classList.add('flex');
-                if(icon) icon.classList.add('rotate-180');
+                if (icon) icon.classList.add('rotate-180');
             } else {
                 el.classList.add('hidden');
                 el.classList.remove('flex');
-                if(icon) icon.classList.remove('rotate-180');
+                if (icon) icon.classList.remove('rotate-180');
             }
         };
 
         document.addEventListener('DOMContentLoaded', () => {
             const paketId = "{{ paket }}"; // e.g. "sulsel_1"
             let targetDisplayName = "Paket Spesifik";
-            
+
             if (paketId) {
                 let nomor = paketId.split('_')[1];
                 if (paketId.startsWith('sulsel_')) {
@@ -252,7 +491,7 @@
                     targetDisplayName = "Paket Sulawesi Tenggara " + nomor;
                 }
             }
-            
+
             document.getElementById('header-paket-name').innerText = targetDisplayName;
 
             // Fetch data from API
@@ -261,21 +500,148 @@
                 .then(data => {
                     document.getElementById('loading-overlay').classList.add('hidden');
                     if (data.error) {
-                        alert('Gagal mengambil data S-Curve: ' + data.error);
+                        // Show inline empty state, not alert
+                        const overlay = document.getElementById('no-data-state');
+                        if (overlay) overlay.classList.remove('hidden');
+                        return;
+                    }
+                    // Check if data is actually empty (sheets not yet filled)
+                    if (!data.target || data.target.length === 0) {
+                        const overlay = document.getElementById('no-data-state');
+                        if (overlay) overlay.classList.remove('hidden');
+                        // Still render contract info if available
+                        if (data.contract_info) renderContractInfo(data.contract_info);
                         return;
                     }
                     renderSCurveChart(data);
+                    renderContractInfo(data.contract_info);
+                    renderEquipmentInfo(data.equipment);
                 })
                 .catch(error => {
                     document.getElementById('loading-overlay').classList.add('hidden');
+                    const overlay = document.getElementById('no-data-state');
+                    if (overlay) overlay.classList.remove('hidden');
                     console.error('Error fetching s-curve data:', error);
-                    alert('Terjadi kesalahan koneksi saat mengambil data S-Curve.');
                 });
         });
 
+        const renderEquipmentInfo = (equipmentList) => {
+            const section = document.getElementById('equipment-info-section');
+            const tbody = document.getElementById('equipment-table-body');
+
+            if (!equipmentList || equipmentList.length === 0) {
+                section.classList.add('hidden');
+                return;
+            }
+
+            section.classList.remove('hidden');
+            tbody.innerHTML = '';
+
+            equipmentList.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50/50 transition-colors duration-200 group';
+
+                // Status checking
+                const isFulfilled = parseFloat(item.tersedia) >= parseFloat(item.kebutuhan);
+                const statusHtml = isFulfilled
+                    ? `<span class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wide bg-emerald-50 text-emerald-600 border border-emerald-200 shadow-sm"><i class="fa-solid fa-check mr-1.5"></i> TERPENUHI</span>`
+                    : `<span class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold tracking-wide bg-rose-50 text-rose-600 border border-rose-200 shadow-sm"><i class="fa-solid fa-xmark mr-1.5"></i> KURANG</span>`;
+
+                tr.innerHTML = `
+                    <td class="py-4 px-4 text-sm text-slate-400 font-medium text-center">${item.no || (index + 1)}</td>
+                    <td class="py-4 px-4">
+                        <span class="text-sm font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">${item.jenis}</span>
+                    </td>
+                    <td class="py-4 px-4 text-sm text-slate-500">${item.spesifikasi}</td>
+                    <td class="py-4 px-4 text-center">
+                        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-100 text-sm font-bold text-slate-600 border border-slate-200">${item.kebutuhan}</span>
+                    </td>
+                    <td class="py-4 px-4 text-center">
+                        <span class="inline-flex items-center justify-center w-8 h-8 rounded-full ${isFulfilled ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' : 'bg-rose-50 text-rose-600 border border-rose-100'} text-sm font-bold">${item.tersedia}</span>
+                    </td>
+                    <td class="py-4 px-4 text-center">
+                        ${statusHtml}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        };
+
+        const renderContractInfo = (info) => {
+            if (!info || !info.tanggal_mulai) return;
+
+            const card = document.getElementById('contract-info-card');
+            card.classList.remove('hidden');
+
+            // Format date for display (YYYY-MM-DD to DD MMM YYYY)
+            const formatDate = (dateStr) => {
+                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+                const d = new Date(dateStr);
+                return d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+            };
+
+            // Pengawas Konstruksi
+            document.getElementById('pengawas-name-display').textContent = info.pengawas || 'Tidak disebutkan';
+
+            // Sisa hari
+            const sisaHari = info.sisa_hari_kontrak !== undefined ? info.sisa_hari_kontrak : '--';
+            document.getElementById('sisa-hari-number').textContent = sisaHari;
+
+            // Change color based on urgency
+            const sisaBox = document.getElementById('sisa-hari-number').closest('.w-20');
+            if (sisaHari <= 7) {
+                sisaBox.className = sisaBox.className.replace(/from-amber-400 to-orange-500/, 'from-red-500 to-red-700');
+                sisaBox.className = sisaBox.className.replace(/shadow-amber-500\/30/, 'shadow-red-500/30');
+            } else if (sisaHari <= 30) {
+                sisaBox.className = sisaBox.className.replace(/from-amber-400 to-orange-500/, 'from-orange-500 to-red-500');
+                sisaBox.className = sisaBox.className.replace(/shadow-amber-500\/30/, 'shadow-orange-500/30');
+            }
+
+            // Date range
+            const mulaiFormatted = formatDate(info.tanggal_mulai);
+            const berakhirFormatted = info.tanggal_berakhir ? formatDate(info.tanggal_berakhir) : 'Belum ditentukan';
+            document.getElementById('contract-date-range').textContent = mulaiFormatted + ' — ' + berakhirFormatted;
+
+            // Individual date cards
+            document.getElementById('tanggal-mulai-display').textContent = mulaiFormatted;
+            document.getElementById('tanggal-berakhir-display').textContent = berakhirFormatted;
+
+            // Progress bar
+            const pct = info.persentase_waktu || 0;
+            document.getElementById('time-progress-pct').textContent = pct + '%';
+            setTimeout(() => {
+                document.getElementById('time-progress-bar').style.width = pct + '%';
+            }, 300);
+
+            // Labels
+            document.getElementById('elapsed-days-label').textContent = 'Hari ke-' + (info.hari_berjalan || 0);
+            document.getElementById('total-days-label').textContent = 'dari ' + (info.total_hari_kontrak || 0) + ' hari';
+
+            // Animate the number
+            animateNumber('sisa-hari-number', sisaHari);
+        };
+
+        const animateNumber = (elementId, target) => {
+            const el = document.getElementById(elementId);
+            if (typeof target !== 'number') return;
+            const duration = 1000;
+            const start = 0;
+            const startTime = performance.now();
+
+            const update = (currentTime) => {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                // Ease out cubic
+                const eased = 1 - Math.pow(1 - progress, 3);
+                el.textContent = Math.round(start + (target - start) * eased);
+                if (progress < 1) requestAnimationFrame(update);
+            };
+            requestAnimationFrame(update);
+        };
+
         const renderSCurveChart = (data) => {
             const ctx = document.getElementById('sCurveChart').getContext('2d');
-            
+
             // Chart.js default font
             Chart.defaults.font.family = "'Inter', sans-serif";
             Chart.defaults.color = '#64748b';
@@ -299,7 +665,7 @@
                             type: 'line',
                             label: 'Target Kumulatif (%)',
                             data: data.target,
-                            borderColor: '#94a3b8',
+                            borderColor: '#10b981', // Emerald-500
                             borderDash: [5, 5],
                             backgroundColor: 'transparent',
                             borderWidth: 2,
@@ -311,11 +677,11 @@
                             type: 'line',
                             label: 'Realisasi Kumulatif (%)',
                             data: data.realized,
-                            borderColor: '#4f46e5',
-                            backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                            borderColor: '#f43f5e', // Rose-500
+                            backgroundColor: 'rgba(244, 63, 94, 0.1)',
                             borderWidth: 3,
                             pointBackgroundColor: '#ffffff',
-                            pointBorderColor: '#4f46e5',
+                            pointBorderColor: '#f43f5e',
                             pointBorderWidth: 2,
                             pointRadius: 5,
                             fill: true,
@@ -342,7 +708,7 @@
                             cornerRadius: 8,
                             displayColors: true,
                             callbacks: {
-                                label: function(context) {
+                                label: function (context) {
                                     return context.dataset.label + ': ' + context.parsed.y + '%';
                                 }
                             }
@@ -378,4 +744,5 @@
         };
     </script>
 </body>
+
 </html>

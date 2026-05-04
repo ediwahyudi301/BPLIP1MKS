@@ -4,10 +4,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Peta Lokasi Cetak Sawah</title>
+    <style>
+        .petak-label-style, .leaflet-tooltip.petak-label-style {
+            background: none !important;
+            background-color: transparent !important;
+            border: none !important;
+            color: white !important;
+            font-family: 'Plus Jakarta Sans', sans-serif !important;
+            font-weight: 700;
+            font-size: 10px;
+            padding: 0;
+            text-shadow: none !important;
+            box-shadow: none !important;
+            pointer-events: none;
+            white-space: nowrap;
+            transition: font-size 0.2s ease;
+        }
+        /* Leaflet override to remove tooltip arrow and default styling */
+        .leaflet-tooltip-left:before, .leaflet-tooltip-right:before { border: none !important; }
+        .leaflet-tooltip-pane .leaflet-tooltip { border: none !important; background: none !important; box-shadow: none !important; }
+    </style>
+    <title>SID Tersedia - Cetak Sawah</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom CSS -->
@@ -26,9 +46,11 @@
         <!-- Sidebar -->
         <aside class="w-64 bg-slate-900 text-white flex flex-col transition-all duration-300 shadow-2xl z-20">
             <div class="p-5 flex flex-col items-center justify-center border-b border-slate-800 text-center gap-3">
-                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" class="w-12 h-12 object-contain" onerror="this.style.display='none'">
+                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" class="w-12 h-12 object-contain"
+                    onerror="this.style.display='none'">
                 <h1 class="text-[11px] font-bold tracking-wider leading-snug">
-                    BALAI PENGELOLAAN LAHAN IRIGASI PERTANIAN<br><span class="text-green-400 text-[10px] mt-1 inline-block">KELAS 1 MAKASSAR</span>
+                    BALAI PENGELOLAAN LAHAN IRIGASI PERTANIAN<br><span
+                        class="text-green-400 text-[10px] mt-1 inline-block">KELAS 1 MAKASSAR</span>
                 </h1>
             </div>
             <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto custom-scrollbar" id="sidebar-nav">
@@ -40,37 +62,62 @@
                 <a href="{{ url_for('peta') }}"
                     class="flex items-center px-4 py-3 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-500/30 transition hover:bg-indigo-500">
                     <i class="fa-solid fa-map-location-dot w-6"></i>
-                    <span class="font-semibold ml-3">Peta Lokasi</span>
+                    <span class="font-semibold ml-3">SID Tersedia</span>
                 </a>
-                
+
                 <!-- Laporan Section with Dropdown -->
                 <div class="relative">
-                    <button type="button" onclick="toggleDropdown('dropdown-laporan')" class="w-full flex items-center justify-between px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition focus:outline-none">
+                    <button type="button" onclick="toggleDropdown('dropdown-laporan')"
+                        class="w-full flex items-center justify-between px-4 py-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition focus:outline-none">
                         <div class="flex items-center">
                             <i class="fa-solid fa-clipboard-list w-6 text-left"></i>
                             <span class="font-semibold ml-3">Laporan</span>
                         </div>
-                        <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300" id="icon-dropdown-laporan"></i>
+                        <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300"
+                            id="icon-dropdown-laporan"></i>
                     </button>
-                    
+
                     <div id="dropdown-laporan" class="hidden flex-col pl-12 pr-4 py-2 space-y-3">
                         <!-- A. Sulawesi Selatan -->
                         <div>
-                            <button type="button" onclick="toggleDropdown('dropdown-sulsel', event)" class="w-full flex items-center justify-between py-1 text-sm font-medium text-slate-300 hover:text-white transition focus:outline-none">
+                            <button type="button" onclick="toggleDropdown('dropdown-sulsel', event)"
+                                class="w-full flex items-center justify-between py-1 text-sm font-medium text-slate-300 hover:text-white transition focus:outline-none">
                                 <span>A. Sulawesi Selatan</span>
-                                <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-300" id="icon-dropdown-sulsel"></i>
+                                <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-300"
+                                    id="icon-dropdown-sulsel"></i>
                             </button>
-                            <div id="dropdown-sulsel" class="hidden flex-col pl-4 mt-2 space-y-2 border-l border-slate-700/50">
+                            <div id="dropdown-sulsel"
+                                class="hidden flex-col pl-4 mt-2 space-y-2 border-l border-slate-700/50">
+                                <!-- Master Link for Sulsel -->
+                                <div class="mb-2">
+                                    <a href="{{ url_for('master_sulsel') }}"
+                                        class="flex items-center py-2 px-3 bg-emerald-500/10 text-emerald-400 rounded-lg text-xs font-bold transition hover:bg-emerald-500/20">
+                                        <i class="fa-solid fa-table-list mr-2"></i>
+                                        MASTER PAKET SULSEL
+                                    </a>
+                                </div>
                                 {% for i in range(1, 25) %}
                                 <div>
-                                    <button type="button" onclick="toggleDropdown('dropdown-sulsel-{{i}}', event)" class="w-full flex items-center justify-between py-1 text-xs text-slate-400 hover:text-white transition focus:outline-none">
+                                    <button type="button" onclick="toggleDropdown('dropdown-sulsel-{{i}}', event)"
+                                        class="w-full flex items-center justify-between py-1 text-xs text-slate-400 hover:text-white transition focus:outline-none">
                                         <span>{{i}}. Paket Sulawesi Selatan {{i}}</span>
-                                        <i class="fa-solid fa-chevron-down text-[8px] transition-transform duration-300" id="icon-dropdown-sulsel-{{i}}"></i>
+                                        <i class="fa-solid fa-chevron-down text-[8px] transition-transform duration-300"
+                                            id="icon-dropdown-sulsel-{{i}}"></i>
                                     </button>
-                                    <div id="dropdown-sulsel-{{i}}" class="hidden flex-col pl-4 mt-1 space-y-1 border-l border-slate-700/50">
-                                        <a href="{{ url_for('laporan') }}?paket=sulsel_{{i}}" class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">- Laporan</a>
-                                <a href="{{ url_for('kurva_s') }}?paket=sulsel_{{i}}" class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">- Kurva S</a>
-                                        <a href="{{ url_for('peta') }}?paket=sulsel_{{i}}" class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">- Lokasi</a>
+                                    <div id="dropdown-sulsel-{{i}}"
+                                        class="hidden flex-col pl-4 mt-1 space-y-1 border-l border-slate-700/50">
+                                        <a href="{{ url_for('laporan') }}?paket=sulsel_{{i}}"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Laporan</a>
+                                        <a href="{{ url_for('kurva_s') }}?paket=sulsel_{{i}}"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Kurva S</a>
+                                        <a href="{{ url_for('peta') }}?paket=sulsel_{{i}}"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Lokasi</a>
+                                        <a href="{{ url_for('realisasi') }}?paket=sulsel_{{i}}&minggu=1"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Realisasi</a>
                                     </div>
                                 </div>
                                 {% endfor %}
@@ -79,21 +126,36 @@
 
                         <!-- B. Sulawesi Barat -->
                         <div>
-                            <button type="button" onclick="toggleDropdown('dropdown-sulbar', event)" class="w-full flex items-center justify-between py-1 text-sm font-medium text-slate-300 hover:text-white transition focus:outline-none">
+                            <button type="button" onclick="toggleDropdown('dropdown-sulbar', event)"
+                                class="w-full flex items-center justify-between py-1 text-sm font-medium text-slate-300 hover:text-white transition focus:outline-none">
                                 <span>B. Sulawesi Barat</span>
-                                <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-300" id="icon-dropdown-sulbar"></i>
+                                <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-300"
+                                    id="icon-dropdown-sulbar"></i>
                             </button>
-                            <div id="dropdown-sulbar" class="hidden flex-col pl-4 mt-2 space-y-2 border-l border-slate-700/50">
+                            <div id="dropdown-sulbar"
+                                class="hidden flex-col pl-4 mt-2 space-y-2 border-l border-slate-700/50">
                                 {% for i in range(1, 5) %}
                                 <div>
-                                    <button type="button" onclick="toggleDropdown('dropdown-sulbar-{{i}}', event)" class="w-full flex items-center justify-between py-1 text-xs text-slate-400 hover:text-white transition focus:outline-none">
+                                    <button type="button" onclick="toggleDropdown('dropdown-sulbar-{{i}}', event)"
+                                        class="w-full flex items-center justify-between py-1 text-xs text-slate-400 hover:text-white transition focus:outline-none">
                                         <span>{{i}}. Paket Sulawesi Barat {{i}}</span>
-                                        <i class="fa-solid fa-chevron-down text-[8px] transition-transform duration-300" id="icon-dropdown-sulbar-{{i}}"></i>
+                                        <i class="fa-solid fa-chevron-down text-[8px] transition-transform duration-300"
+                                            id="icon-dropdown-sulbar-{{i}}"></i>
                                     </button>
-                                    <div id="dropdown-sulbar-{{i}}" class="hidden flex-col pl-4 mt-1 space-y-1 border-l border-slate-700/50">
-                                        <a href="{{ url_for('laporan') }}?paket=sulbar_{{i}}" class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">- Laporan</a>
-                                <a href="{{ url_for('kurva_s') }}?paket=sulbar_{{i}}" class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">- Kurva S</a>
-                                        <a href="{{ url_for('peta') }}?paket=sulbar_{{i}}" class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">- Lokasi</a>
+                                    <div id="dropdown-sulbar-{{i}}"
+                                        class="hidden flex-col pl-4 mt-1 space-y-1 border-l border-slate-700/50">
+                                        <a href="{{ url_for('laporan') }}?paket=sulbar_{{i}}"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Laporan</a>
+                                        <a href="{{ url_for('kurva_s') }}?paket=sulbar_{{i}}"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Kurva S</a>
+                                        <a href="{{ url_for('peta') }}?paket=sulbar_{{i}}"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Lokasi</a>
+                                        <a href="{{ url_for('realisasi') }}?paket=sulbar_{{i}}&minggu=1"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Realisasi</a>
                                     </div>
                                 </div>
                                 {% endfor %}
@@ -102,21 +164,45 @@
 
                         <!-- C. Sulawesi Tengah -->
                         <div>
-                            <button type="button" onclick="toggleDropdown('dropdown-sulteng', event)" class="w-full flex items-center justify-between py-1 text-sm font-medium text-slate-300 hover:text-white transition focus:outline-none">
+                            <button type="button" onclick="toggleDropdown('dropdown-sulteng', event)"
+                                class="w-full flex items-center justify-between py-1 text-sm font-medium text-slate-300 hover:text-white transition focus:outline-none">
                                 <span>C. Sulawesi Tengah</span>
-                                <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-300" id="icon-dropdown-sulteng"></i>
+                                <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-300"
+                                    id="icon-dropdown-sulteng"></i>
                             </button>
-                            <div id="dropdown-sulteng" class="hidden flex-col pl-4 mt-2 space-y-2 border-l border-slate-700/50">
+                            <div id="dropdown-sulteng"
+                                class="hidden flex-col pl-4 mt-2 space-y-2 border-l border-slate-700/50">
+                                <!-- Master Link for Sulteng -->
+                                <div class="mb-2">
+                                    <a href="{{ url_for('master_sulteng') }}"
+                                        class="flex items-center py-2 px-3 bg-emerald-500/10 text-emerald-400 rounded-lg text-xs font-bold transition hover:bg-emerald-500/20">
+                                        <i class="fa-solid fa-table-list mr-2"></i>
+                                        MASTER PAKET SULTENG
+                                    </a>
+                                </div>
+
                                 {% for i in range(1, 12) %}
                                 <div>
-                                    <button type="button" onclick="toggleDropdown('dropdown-sulteng-{{i}}', event)" class="w-full flex items-center justify-between py-1 text-xs text-slate-400 hover:text-white transition focus:outline-none">
+                                    <button type="button" onclick="toggleDropdown('dropdown-sulteng-{{i}}', event)"
+                                        class="w-full flex items-center justify-between py-1 text-xs text-slate-400 hover:text-white transition focus:outline-none">
                                         <span>{{i}}. Paket Sulawesi Tengah {{i}}</span>
-                                        <i class="fa-solid fa-chevron-down text-[8px] transition-transform duration-300" id="icon-dropdown-sulteng-{{i}}"></i>
+                                        <i class="fa-solid fa-chevron-down text-[8px] transition-transform duration-300"
+                                            id="icon-dropdown-sulteng-{{i}}"></i>
                                     </button>
-                                    <div id="dropdown-sulteng-{{i}}" class="hidden flex-col pl-4 mt-1 space-y-1 border-l border-slate-700/50">
-                                        <a href="{{ url_for('laporan') }}?paket=sulteng_{{i}}" class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">- Laporan</a>
-                                <a href="{{ url_for('kurva_s') }}?paket=sulteng_{{i}}" class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">- Kurva S</a>
-                                        <a href="{{ url_for('peta') }}?paket=sulteng_{{i}}" class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">- Lokasi</a>
+                                    <div id="dropdown-sulteng-{{i}}"
+                                        class="hidden flex-col pl-4 mt-1 space-y-1 border-l border-slate-700/50">
+                                        <a href="{{ url_for('laporan') }}?paket=sulteng_{{i}}"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Laporan</a>
+                                        <a href="{{ url_for('kurva_s') }}?paket=sulteng_{{i}}"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Kurva S</a>
+                                        <a href="{{ url_for('peta') }}?paket=sulteng_{{i}}"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Lokasi</a>
+                                        <a href="{{ url_for('realisasi') }}?paket=sulteng_{{i}}&minggu=1"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Realisasi</a>
                                     </div>
                                 </div>
                                 {% endfor %}
@@ -125,20 +211,35 @@
 
                         <!-- D. Sulawesi Tenggara -->
                         <div>
-                            <button type="button" onclick="toggleDropdown('dropdown-sultra', event)" class="w-full flex items-center justify-between py-1 text-sm font-medium text-slate-300 hover:text-white transition focus:outline-none">
+                            <button type="button" onclick="toggleDropdown('dropdown-sultra', event)"
+                                class="w-full flex items-center justify-between py-1 text-sm font-medium text-slate-300 hover:text-white transition focus:outline-none">
                                 <span>D. Sulawesi Tenggara</span>
-                                <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-300" id="icon-dropdown-sultra"></i>
+                                <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-300"
+                                    id="icon-dropdown-sultra"></i>
                             </button>
-                            <div id="dropdown-sultra" class="hidden flex-col pl-4 mt-2 space-y-2 border-l border-slate-700/50">
+                            <div id="dropdown-sultra"
+                                class="hidden flex-col pl-4 mt-2 space-y-2 border-l border-slate-700/50">
                                 <div>
-                                    <button type="button" onclick="toggleDropdown('dropdown-sultra-1', event)" class="w-full flex items-center justify-between py-1 text-xs text-slate-400 hover:text-white transition focus:outline-none">
+                                    <button type="button" onclick="toggleDropdown('dropdown-sultra-1', event)"
+                                        class="w-full flex items-center justify-between py-1 text-xs text-slate-400 hover:text-white transition focus:outline-none">
                                         <span>1. Paket Sulawesi Tenggara 1</span>
-                                        <i class="fa-solid fa-chevron-down text-[8px] transition-transform duration-300" id="icon-dropdown-sultra-1"></i>
+                                        <i class="fa-solid fa-chevron-down text-[8px] transition-transform duration-300"
+                                            id="icon-dropdown-sultra-1"></i>
                                     </button>
-                                    <div id="dropdown-sultra-1" class="hidden flex-col pl-4 mt-1 space-y-1 border-l border-slate-700/50">
-                                        <a href="{{ url_for('laporan') }}?paket=sultra_1" class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">- Laporan</a>
-                                <a href="{{ url_for('kurva_s') }}?paket=sultra_1" class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">- Kurva S</a>
-                                        <a href="{{ url_for('peta') }}?paket=sultra_1" class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">- Lokasi</a>
+                                    <div id="dropdown-sultra-1"
+                                        class="hidden flex-col pl-4 mt-1 space-y-1 border-l border-slate-700/50">
+                                        <a href="{{ url_for('laporan') }}?paket=sultra_1"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Laporan</a>
+                                        <a href="{{ url_for('kurva_s') }}?paket=sultra_1"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Kurva S</a>
+                                        <a href="{{ url_for('peta') }}?paket=sultra_1"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Lokasi</a>
+                                        <a href="{{ url_for('realisasi') }}?paket=sultra_1&minggu=1"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Realisasi</a>
                                     </div>
                                 </div>
                             </div>
@@ -157,8 +258,18 @@
             <!-- Header -->
             <header class="bg-white shadow-sm z-10 p-4 transition-all flex justify-between items-center px-8 relative">
                 <div>
-                    <h2 class="text-2xl font-bold text-slate-800">Peta Lokasi</h2>
+                    <h2 class="text-2xl font-bold text-slate-800">SID Tersedia</h2>
                     <p class="text-sm text-slate-500">Sebaran Lokasi Cetak Sawah</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div id="sheet-data-badge" class="hidden flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-full border border-emerald-100 animate-pulse">
+                        <i class="fa-solid fa-rotate text-[10px]"></i>
+                        <span class="text-[10px] font-bold uppercase tracking-widest">Live Sync: Sheets Active</span>
+                    </div>
+                    <button onclick="window.print()"
+                        class="flex items-center px-4 py-2 bg-white text-slate-600 border border-slate-200 rounded-xl hover:bg-slate-50 transition shadow-sm text-sm font-semibold">
+                        <i class="fa-solid fa-print mr-2"></i> Cetak Peta
+                    </button>
                 </div>
             </header>
 
@@ -172,47 +283,44 @@
     <!-- Map Script -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Inisialisasi map dengan kordinat rata-rata indonesia (Titik Tengah)
             const map = L.map('map').setView([-2.5489, 118.0149], 5);
 
-            // Layer Basemaps
-            const googleSatellite = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
-                maxZoom: 20,
-                attribution: '&copy; Google'
-            });
-
-            const googleStreet = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-                maxZoom: 20,
-                attribution: '&copy; Google'
-            });
+            // ── Dynamic Label Scaling ────────────────
+            function updateLabelScaling() {
+                const zoom = map.getZoom();
+                let fontSize = '0px'; 
+                if (zoom >= 14 && zoom < 16) fontSize = '9px';
+                if (zoom >= 16) fontSize = '12px';
+                
+                document.querySelectorAll('.petak-label-style').forEach(el => {
+                    el.style.fontSize = fontSize;
+                });
+            }
+            map.on('zoomend', updateLabelScaling);
+            map.on('overlayadd', () => setTimeout(updateLabelScaling, 100)); // Delay agar layer selesai render
 
             const googleHybrid = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
-                maxZoom: 20,
-                attribution: '&copy; Google'
+                maxZoom: 20, attribution: '&copy; Google'
             });
-
+            const googleSatellite = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+                maxZoom: 20, attribution: '&copy; Google'
+            });
+            const googleStreet = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+                maxZoom: 20, attribution: '&copy; Google'
+            });
             const esriSatellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                maxZoom: 19,
-                attribution: '&copy; Esri'
+                maxZoom: 19, attribution: '&copy; Esri'
             });
 
-            // Set Default basemap (Google Hybrid lebih cocok karena punya satelit dan nama tempat)
             googleHybrid.addTo(map);
 
-            // Create Layer tersendiri untuk menaruh Poligon
-            const polygonLayer = L.featureGroup().addTo(map);
-
-            // Fetch and apply the local GeoJSON files
-            var geojsonFiles = [
+            const geojsonFiles = [
                 { name: 'Sulawesi Barat', path: "{{ url_for('static', filename='DATA CSR/SULAWESI_BARAT.geojson') }}" },
                 { name: 'Sulawesi Selatan', path: "{{ url_for('static', filename='DATA CSR/SULAWESI_SELATAN.geojson') }}" },
                 { name: 'Sulawesi Tengah', path: "{{ url_for('static', filename='DATA CSR/SULAWESI_TENGAH.geojson') }}" },
                 { name: 'Sulawesi Tenggara', path: "{{ url_for('static', filename='DATA CSR/SULAWESI_TENGGARA.geojson') }}" }
             ];
 
-            var colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b']; // Blue, Red, Green, Amber
-
-            // Setup Layer Control (Agar bisa pindah-pindah Base map dan hide/show layer polygon)
             const baseMaps = {
                 "Google Hybrid": googleHybrid,
                 "Google Satellite": googleSatellite,
@@ -220,14 +328,10 @@
                 "ESRI Satellite": esriSatellite
             };
 
-            // Inisiasi Layer Control kosong terlebih dahulu
             const layerControl = L.control.layers(baseMaps, {}, { position: 'topright' }).addTo(map);
-
-            // Ambil parameter dari URL untuk filter paket
             const urlParams = new URLSearchParams(window.location.search);
-            const paketId = urlParams.get('paket'); // e.g. "sulsel_17"
-            
-            // Fungsi untuk mengenerate warna unik dari string nama paket
+            const paketId = urlParams.get('paket');
+
             const palette = ['#ef4444', '#f97316', '#f59e0b', '#84cc16', '#22c55e', '#10b981', '#14b8a6', '#06b6d4', '#0ea5e9', '#0284c7', '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e', '#e11d48'];
             function getColorForPaket(paketName) {
                 if (!paketName) return '#3b82f6';
@@ -238,147 +342,289 @@
                 return palette[Math.abs(hash) % palette.length];
             }
 
-            // Fungsi untuk menterjemahkan paketId dari URL (misal: "sulsel_17") ke format normalisasi ("sulawesi selatan 17")
+            function getStatusColor(sheetData) {
+                if (!sheetData) return null;
+                const stages = ['LAND CLEARING', 'LAND LEVELLING', 'OLAH LAHAN'];
+                const done = stages.filter(s => {
+                    const val = (sheetData[s] || '').toLowerCase();
+                    return ['sudah', 'selesai', 'done', 'ya', 'yes'].includes(val);
+                }).length;
+                if (done === 3) return '#22c55e';
+                if (done === 2) return '#84cc16';
+                if (done === 1) return '#f59e0b';
+                return '#ef4444';
+            }
+
+            function statusBadge(val) {
+                const v = (val || '').toLowerCase();
+                const done = ['sudah', 'selesai', 'done', 'ya', 'yes'].includes(v);
+                return done 
+                    ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700"><i class="fa-solid fa-check"></i>${val}</span>`
+                    : `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-600"><i class="fa-solid fa-clock"></i>${val}</span>`;
+            }
+
             let targetNormalized = null;
             let targetDisplayName = null;
             if (paketId) {
-                let nomor = paketId.split('_')[1];
-                if (paketId.startsWith('sulsel_')) {
-                    targetNormalized = "sulawesi selatan " + nomor;
-                    targetDisplayName = "Paket Sulawesi Selatan " + nomor;
-                } else if (paketId.startsWith('sulbar_')) {
-                    targetNormalized = "sulawesi barat " + nomor;
-                    targetDisplayName = "Paket Sulawesi Barat " + nomor;
-                } else if (paketId.startsWith('sulteng_')) {
-                    targetNormalized = "sulawesi tengah " + nomor;
-                    targetDisplayName = "Paket Sulawesi Tengah " + nomor;
-                } else if (paketId.startsWith('sultra_')) {
-                    targetNormalized = "sulawesi tenggara " + nomor;
-                    targetDisplayName = "Paket Sulawesi Tenggara " + nomor;
+                const parts = paketId.split('_');
+                const prov = parts[0];
+                const nomor = parts[1];
+                const provMap = { 'sulsel': 'sulawesi selatan', 'sulbar': 'sulawesi barat', 'sulteng': 'sulawesi tengah', 'sultra': 'sulawesi tenggara' };
+                if (provMap[prov]) {
+                    targetNormalized = `${provMap[prov]} ${nomor}`;
+                    targetDisplayName = `Paket ${provMap[prov].split(' ').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ')} ${nomor}`;
                 }
             }
 
-            geojsonFiles.forEach((file, index) => {
-                fetch(file.path)
-                    .then(response => {
-                        if (!response.ok) throw new Error("HTTP error " + response.status);
-                        return response.json();
-                    })
-                    .then(data => {
-                        // Jika ada klik dari sidebar, filter data geojson-nya
-                        let geojsonData = data;
-                        if (targetNormalized) {
-                            geojsonData = {
-                                ...data,
-                                features: data.features.filter(f => {
-                                    if (!f.properties || !f.properties.PAKET) return false;
-                                    // Normalisasi data dari GeoJSON: buang kata "paket" agar cocok baik "Sulawesi Selatan 1" maupun "Paket Sulawesi Selatan 1"
-                                    let propName = String(f.properties.PAKET).replace(/paket/i, '').trim().toLowerCase();
-                                    return propName === targetNormalized;
-                                })
-                            };
-                            // Jika di provinsi ini tidak ada data paket yang dicari, skip render layer ini
-                            if (geojsonData.features.length === 0) return;
-                        }
+            let petakDataPromise = Promise.resolve({});
+            if (paketId) {
+                petakDataPromise = fetch(`/api/petak_data/${paketId}`)
+                    .then(r => r.ok ? r.json() : {})
+                    .catch(() => ({}));
+            }
 
-                        // Create a separate LayerGroup for each province or filtered package
-                        const layer = L.geoJSON(geojsonData, {
-                            style: function (feature) {
-                                // Gunakan warna dinamis berdasarkan field PAKET jika tersedia
-                                const paketName = feature.properties ? feature.properties.PAKET : null;
-                                const polygonColor = paketName ? getColorForPaket(paketName) : colors[index];
-                                
-                                return {
-                                    color: polygonColor,
-                                    weight: 2,
-                                    opacity: 1,
-                                    fillOpacity: 0.5
+            petakDataPromise.then(sheetData => {
+                const hasSheetData = sheetData && Object.keys(sheetData).length > 0;
+                if (hasSheetData) {
+                    const badge = document.getElementById('sheet-data-badge');
+                    if (badge) badge.classList.remove('hidden');
+                }
+
+                geojsonFiles.forEach((file, index) => {
+                    fetch(file.path)
+                        .then(r => r.json())
+                        .then(data => {
+                            let geojsonData = data;
+                            if (targetNormalized) {
+                                geojsonData = {
+                                    ...data,
+                                    features: data.features.filter(f => {
+                                        if (!f.properties || !f.properties.PAKET) return false;
+                                        let propName = String(f.properties.PAKET).replace(/paket/i, '').trim().toLowerCase();
+                                        return propName === targetNormalized;
+                                    })
                                 };
-                            },
-                            onEachFeature: function (feature, layer) {
-                                // Build dynamic properties list from GeoJSON
-                                let propsHtml = '';
-                                if (feature.properties) {
-                                    for (const [key, value] of Object.entries(feature.properties)) {
-                                        const displayValue = (value !== null && value !== '') ? value : '-';
-                                        const displayKey = key.replace(/_/g, ' ');
-                                        propsHtml += `
-                                            <div class="flex justify-between items-start py-2 border-b border-slate-100 last:border-0 gap-4">
-                                                <span class="text-slate-500 font-medium text-[11px] uppercase tracking-wider mt-0.5">${displayKey}</span>
-                                                <span class="text-slate-800 text-xs font-semibold text-right break-words max-w-[60%]">${displayValue}</span>
-                                            </div>
-                                        `;
-                                    }
-                                }
-                                
-                                const titlePaket = (feature.properties && feature.properties.PAKET) ? feature.properties.PAKET : 'Detail Polygon';
-                                
-                                const tooltipContent = `
-                                    <div class="font-inter p-1 min-w-[240px] max-w-[320px]">
-                                        <div class="flex items-center mb-3 pb-3 border-b border-slate-200">
-                                            <div class="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-500 mr-3 shadow-sm shrink-0">
-                                                <i class="fa-solid fa-map-pin"></i>
-                                            </div>
-                                            <div class="flex-1 min-w-0">
-                                                <h4 class="text-sm font-bold text-slate-800 leading-tight line-clamp-2" title="${titlePaket}">${titlePaket}</h4>
-                                                <div class="text-[10px] text-slate-400 uppercase tracking-widest mt-0.5">${file.name}</div>
-                                            </div>
-                                        </div>
-                                        <div class="max-h-56 overflow-y-auto custom-scrollbar pr-1">
-                                            ${propsHtml || '<div class="text-xs text-slate-400 italic text-center py-2">Tidak ada atribut data tersedia</div>'}
-                                        </div>
-                                    </div>
-                                `;
-                                
-                                layer.bindPopup(tooltipContent, {
-                                    className: 'soft-popup',
-                                    minWidth: 260
-                                });
+                                if (geojsonData.features.length === 0) return;
                             }
-                        });
 
-                        layer.addTo(map);
+                            const layer = L.geoJSON(geojsonData, {
+                                style: (feature) => {
+                                    const props = feature.properties || {};
+                                    // Support both N_PETAK or NO_PETAK as the join key from GeoJSON
+                                    const noPetak = props.N_PETAK || props.NO_PETAK || null;
+                                    const pData = noPetak ? sheetData[noPetak] : null;
+                                    const statusColor = hasSheetData ? getStatusColor(pData) : null;
+                                    const baseColor = props.PAKET ? getColorForPaket(props.PAKET) : '#3b82f6';
+                                    
+                                    const polyColor = statusColor || baseColor;
+                                    
+                                    return { 
+                                        color: polyColor, 
+                                        weight: 1.5,
+                                        opacity: 1.0, 
+                                        fillColor: polyColor, 
+                                        fillOpacity: 0.2 
+                                    };
+                                },
+                                onEachFeature: (feature, layer) => {
+                                    const props = feature.properties || {};
+                                    const noPetak = props.N_PETAK || props.NO_PETAK || null;
+                                    const pData = noPetak ? (sheetData[noPetak] || null) : null;
 
-                        const layerName = targetDisplayName ? `Fokus: ${targetDisplayName}` : `Area ${file.name}`;
-                        layerControl.addOverlay(layer, layerName);
+                                    // ── Add Permanent Label ────────────────
+                                    if (noPetak) {
+                                        layer.bindTooltip(noPetak, { 
+                                            permanent: true, 
+                                            direction: 'center', 
+                                            className: 'petak-label-style' 
+                                        }).openTooltip();
+                                    }
 
-                        try {
-                            // Selalu zoom-in jika ini adalah paket yang difilter
+                                    let popupContent = '';
+
+                                    if (paketId) {
+                                        // ── Merge properties with de-duplication ────────────────
+                                        let combined = { ...props };
+                                        if (pData) {
+                                            // Map administrative fields from spreadsheet to GIS keys if they exist
+                                            // Priority: Spreadsheet > GeoJSON
+                                            const adminMap = {
+                                                'PROVINSI': 'WADMPR',
+                                                'KABUPATEN': 'WADMKK',
+                                                'KECAMATAN': 'WADMKC',
+                                                'DESA': 'WADMKD',
+                                                'DESA/KELURAHAN': 'WADMKD',
+                                                'DESA_KELURAHAN': 'WADMKD',
+                                                'DESA_KEL': 'WADMKD',
+                                                'KETUA POKTAN': 'K_POKTAN',
+                                                'K_POKTAN': 'K_POKTAN',
+                                                'PEMILIK': 'NAMA_PEMIL',
+                                                'NAMA_PEMILIK': 'NAMA_PEMIL',
+                                                'LUAS_HA': 'LUAS',
+                                                'LUAS': 'LUAS',
+                                                'NO HP': 'NO_HP',
+                                                'NO_HP': 'NO_HP',
+                                                'NO_HP1': 'NO_HP',
+                                                'NO_HP_1': 'NO_HP',
+                                                'NO_PETAK': 'N_PETAK',
+                                                'N_PETAK': 'N_PETAK'
+                                            };
+
+                                            Object.entries(pData).forEach(([k, v]) => { 
+                                                const upperK = k.toUpperCase().replace(/\s/g, '_');
+                                                // Check exact match or normalized upper version
+                                                const targetKey = adminMap[k] || adminMap[upperK];
+                                                if (targetKey) {
+                                                    combined[targetKey] = v;
+                                                } else {
+                                                    combined[k] = v; 
+                                                }
+                                            });
+                                        }
+
+                                        let itemsHtml = '';
+                                        const stages = ['LAND CLEARING', 'LAND LEVELLING', 'OLAH LAHAN'];
+                                        
+                                        // Mapping for human-readable labels
+                                        const labelMap = {
+                                            'P_SID': 'SID',
+                                            'PENGAWAS': 'PENGAWAS',
+                                            'WADMPR': 'Provinsi',
+                                            'WADMKK': 'Kabupaten',
+                                            'WADMKC': 'Kecamatan',
+                                            'WADMKD': 'Desa',
+                                            'N_PETAK': 'Nomor Petak',
+                                            'POKTAN': 'Kelompok Tani',
+                                            'K_POKTAN': 'Ketua Poktan',
+                                            'NAMA_PEMIL': 'Nama Pemilik',
+                                            'NO_HP': 'Nomor HP',
+                                            'LUAS': 'Luas (Ha)',
+                                            'KENDALA': 'KENDALA'
+                                        };
+
+                                        // Specific order requested by the user
+                                        const priority = [
+                                            'P_SID', 'PENGAWAS', 'WADMPR', 'WADMKK', 'WADMKC', 'WADMKD', 
+                                            'N_PETAK', 'POKTAN', 'K_POKTAN', 'NAMA_PEMIL', 
+                                            'NO_HP', 'LUAS', 'LAND CLEARING', 'LAND LEVELLING', 'OLAH LAHAN', 'KENDALA'
+                                        ];
+                                        
+                                        const allKeys = Object.keys(combined);
+                                        const sortedKeys = allKeys.sort((a, b) => {
+                                            const idxA = priority.indexOf(a), idxB = priority.indexOf(b);
+                                            if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                                            if (idxA !== -1) return -1;
+                                            if (idxB !== -1) return 1;
+                                            return a.localeCompare(b);
+                                        });
+
+                                        sortedKeys.forEach(k => {
+                                            if (k === 'PAKET' || k === 'OBJECTID') return;
+                                            if (!priority.includes(k) && !stages.includes(k)) return;
+
+                                            const val = (combined[k] !== null && combined[k] !== undefined && combined[k] !== '') ? combined[k] : '-';
+                                            const isStage = stages.includes(k);
+                                            const displayLabel = labelMap[k] || k.replace(/_/g, ' ');
+                                            
+                                            itemsHtml += `
+                                                <div class="flex justify-between items-start py-2 border-b border-slate-100 last:border-0 gap-3 px-1">
+                                                    <span class="text-slate-400 font-medium text-[10px] uppercase tracking-wider shrink-0 mt-0.5">${displayLabel}</span>
+                                                    <span class="text-right">
+                                                        ${isStage ? statusBadge(val) : `<span class="text-slate-700 text-xs font-semibold break-words">${val}</span>`}
+                                                    </span>
+                                                </div>`;
+                                        });
+
+                                        const title = props.PAKET || 'Detail Polygon';
+                                        const badgeP = noPetak ? `<span class="ml-2 text-[10px] font-bold bg-indigo-600 text-white px-2 py-0.5 rounded-full shadow-sm">${noPetak}</span>` : '';
+                                        popupContent = `
+                                            <div class="font-inter p-0 min-w-[280px] max-w-[360px]">
+                                                <div class="flex items-center p-4 bg-slate-900 text-white rounded-t-xl mb-0">
+                                                    <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white mr-3 shrink-0"><i class="fa-solid fa-location-dot"></i></div>
+                                                    <div class="flex-1 min-w-0">
+                                                        <h4 class="text-sm font-bold leading-tight flex items-center">${title}${badgeP}</h4>
+                                                        <div class="text-[10px] text-slate-400 uppercase tracking-widest mt-0.5">${file.name}</div>
+                                                    </div>
+                                                </div>
+                                                <div class="p-3 max-h-80 overflow-y-auto custom-scrollbar">
+                                                    ${itemsHtml}
+                                                    ${hasSheetData && !pData ? `<div class="mt-4 p-3 bg-rose-50 rounded-xl border border-rose-100 text-center"><i class="fa-solid fa-triangle-exclamation text-rose-500 mb-1"></i><p class="text-[10px] text-rose-600 font-medium">Petak ini tidak ditemukan di Google Sheets</p></div>` : ''}
+                                                </div>
+                                            </div>`;
+                                    } else {
+                                        // ── OPTION B: Simple Basic Popup (for general "SID Tersedia" view) ──
+                                        let propsHtml = '';
+                                        for (const [key, value] of Object.entries(props)) {
+                                            const displayValue = (value !== null && value !== '') ? value : '-';
+                                            propsHtml += `
+                                                <div class="flex justify-between items-start py-2 border-b border-slate-100 last:border-0 gap-4">
+                                                    <span class="text-slate-400 font-medium text-[10px] uppercase tracking-wider mt-0.5">${key.replace(/_/g, ' ')}</span>
+                                                    <span class="text-slate-800 text-xs font-semibold text-right break-words max-w-[60%]">${displayValue}</span>
+                                                </div>`;
+                                        }
+                                        const title = props.PAKET || 'Detail Polygon';
+                                        popupContent = `
+                                            <div class="font-inter p-1 min-w-[240px] max-w-[320px]">
+                                                <div class="flex items-center mb-3 pb-3 border-b border-slate-200">
+                                                    <div class="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-500 mr-3 shadow-sm shrink-0"><i class="fa-solid fa-map-pin"></i></div>
+                                                    <div class="flex-1 min-w-0">
+                                                        <h4 class="text-sm font-bold text-slate-800 leading-tight">${title}</h4>
+                                                        <div class="text-[10px] text-slate-400 uppercase tracking-widest mt-0.5">${file.name}</div>
+                                                    </div>
+                                                </div>
+                                                <div class="max-h-64 overflow-y-auto custom-scrollbar pr-1">${propsHtml || '<div class="text-xs text-slate-400 italic text-center py-2">Tidak ada atribut data tersedia</div>'}</div>
+                                            </div>`;
+                                    }
+
+                                    layer.bindPopup(popupContent, { 
+                                        className: paketId ? 'premium-popup' : 'soft-popup', 
+                                        minWidth: paketId ? 280 : 240 
+                                    });
+
+                                    layer.on('mouseover', function() { this.setStyle({ weight: 3 }); });
+                                    layer.on('mouseout', function() { this.setStyle({ weight: 1.5 }); });
+                                }
+                            });
+
+                            layer.addTo(map);
+                            layerControl.addOverlay(layer, targetDisplayName ? `Fokus: ${targetDisplayName}` : `Area ${file.name}`);
+
                             if (targetDisplayName && geojsonData.features.length > 0) {
                                 const bounds = layer.getBounds();
-                                if (bounds.isValid()) {
-                                    map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
-                                }
+                                if (bounds.isValid()) map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
                             }
-                        } catch (e) {
-                            console.error("Gagal melakukan zoom ke batas koordinat:", e);
-                        }
-                    })
-                    .catch(err => console.error("Error loading GeoJSON for " + file.name + ": ", err));
+                        });
+                });
+
+                if (hasSheetData) {
+                    const legend = L.control({ position: 'bottomright' });
+                    legend.onAdd = () => {
+                        const div = L.DomUtil.create('div', 'leaflet-bar');
+                        div.style.cssText = 'background:white;padding:10px 14px;border-radius:12px;font-family:Inter,sans-serif;font-size:11px;line-height:1.8;box-shadow:0 4px 16px rgba(0,0,0,0.12)';
+                        div.innerHTML = `<div style="font-weight:700;color:#334155;margin-bottom:6px;font-size:10px;text-transform:uppercase;letter-spacing:0.05em">Status Pekerjaan</div>
+                            <div style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:3px;background:#22c55e;display:inline-block"></span> Semua Selesai</div>
+                            <div style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:3px;background:#84cc16;display:inline-block"></span> 2 Tahap Selesai</div>
+                            <div style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:3px;background:#f59e0b;display:inline-block"></span> 1 Tahap Selesai</div>
+                            <div style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:3px;background:#ef4444;display:inline-block"></span> Belum Dimulai</div>`;
+                        return div;
+                    };
+                    legend.addTo(map);
+                }
             });
         });
 
-        // Function for Sidebar Accordions
-        window.toggleDropdown = function(id, event) {
-            if(event) {
-                event.preventDefault();
-                event.stopPropagation();
-            }
+        window.toggleDropdown = function (id, event) {
+            if (event) { event.preventDefault(); event.stopPropagation(); }
             const el = document.getElementById(id);
             const icon = document.getElementById('icon-' + id);
             if (!el) return;
-            
             if (el.classList.contains('hidden')) {
-                el.classList.remove('hidden');
-                el.classList.add('flex');
-                if(icon) icon.classList.add('rotate-180');
+                el.classList.remove('hidden'); el.classList.add('flex');
+                if (icon) icon.classList.add('rotate-180');
             } else {
-                el.classList.add('hidden');
-                el.classList.remove('flex');
-                if(icon) icon.classList.remove('rotate-180');
+                el.classList.add('hidden'); el.classList.remove('flex');
+                if (icon) icon.classList.remove('rotate-180');
             }
         };
     </script>
-</body>
-
 </html>
