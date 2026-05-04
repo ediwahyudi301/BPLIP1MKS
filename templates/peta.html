@@ -46,8 +46,7 @@
         <!-- Sidebar -->
         <aside class="w-64 bg-slate-900 text-white flex flex-col transition-all duration-300 shadow-2xl z-20">
             <div class="p-5 flex flex-col items-center justify-center border-b border-slate-800 text-center gap-3">
-                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" class="w-12 h-12 object-contain"
-                    onerror="this.style.display='none'">
+                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" class="w-12 h-12 object-contain">
                 <h1 class="text-[11px] font-bold tracking-wider leading-snug">
                     BALAI PENGELOLAAN LAHAN IRIGASI PERTANIAN<br><span
                         class="text-green-400 text-[10px] mt-1 inline-block">KELAS 1 MAKASSAR</span>
@@ -315,10 +314,10 @@
             googleHybrid.addTo(map);
 
             const geojsonFiles = [
-                { name: 'Sulawesi Barat', path: "{{ url_for('static', filename='DATA CSR/SULAWESI_BARAT.geojson') }}" },
-                { name: 'Sulawesi Selatan', path: "{{ url_for('static', filename='DATA CSR/SULAWESI_SELATAN.geojson') }}" },
-                { name: 'Sulawesi Tengah', path: "{{ url_for('static', filename='DATA CSR/SULAWESI_TENGAH.geojson') }}" },
-                { name: 'Sulawesi Tenggara', path: "{{ url_for('static', filename='DATA CSR/SULAWESI_TENGGARA.geojson') }}" }
+                { name: 'Sulawesi Barat', path: "{{ url_for('static', filename='DATA_CSR/SULAWESI_BARAT.geojson') }}" },
+                { name: 'Sulawesi Selatan', path: "{{ url_for('static', filename='DATA_CSR/SULAWESI_SELATAN.geojson') }}" },
+                { name: 'Sulawesi Tengah', path: "{{ url_for('static', filename='DATA_CSR/SULAWESI_TENGAH.geojson') }}" },
+                { name: 'Sulawesi Tenggara', path: "{{ url_for('static', filename='DATA_CSR/SULAWESI_TENGGARA.geojson') }}" }
             ];
 
             const baseMaps = {
