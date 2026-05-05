@@ -962,6 +962,20 @@ def api_openclaw_summary():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/agent/test')
+def api_agent_test():
+    """Endpoint untuk mengetes koneksi ke Gemini API."""
+    if not GEMINI_API_KEY:
+        return jsonify({'status': 'error', 'message': 'GEMINI_API_KEY tidak ditemukan di environment variables'})
+    try:
+        resp = requests.get(
+            f"https://generativelanguage.googleapis.com/v1beta/models?key={GEMINI_API_KEY}",
+            timeout=10
+        )
+        return jsonify({'status': resp.status_code, 'body': resp.json()})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
 @app.route('/api/agent/chat', methods=['POST'])
 def api_agent_chat():
     """Endpoint untuk Asisten AI Nina - menggunakan Gemini REST API langsung."""
