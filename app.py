@@ -5,11 +5,15 @@ import pandas as pd
 import requests
 import io
 import os
-import google.generativeai as genai
+try:
+    import google.generativeai as genai
+    GENAI_AVAILABLE = True
+except ImportError:
+    GENAI_AVAILABLE = False
 
 # Konfigurasi Gemini AI (API Key diambil dari Environment Variable)
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-if GEMINI_API_KEY:
+if GEMINI_API_KEY and GENAI_AVAILABLE:
     genai.configure(api_key=GEMINI_API_KEY)
 
 app = Flask(__name__)
@@ -971,8 +975,11 @@ def api_agent_chat():
         req_data = request.get_json()
         user_message = req_data.get('message', '')
 
+        if not GENAI_AVAILABLE:
+            return jsonify({'response': '⚠️ Paket google-generativeai tidak tersedia. Pastikan sudah ditambahkan ke requirements.txt dan Vercel sudah di-redeploy.'})
+
         if not GEMINI_API_KEY:
-            return jsonify({'response': 'Maaf, API Key Gemini belum dikonfigurasi. Silakan tambahkan GEMINI_API_KEY di environment variables Vercel.'})
+            return jsonify({'response': '⚠️ API Key Gemini belum dikonfigurasi. Silakan tambahkan GEMINI_API_KEY di environment variables Vercel, lalu Redeploy.'})
 
         # Ambil data real-time
         dashboard_data = fetch_dashboard_data()
@@ -999,8 +1006,9 @@ Gunakan data di atas untuk menjawab. Jawablah dengan singkat, ramah, dan langsun
         
         return jsonify({'response': response.text})
     except Exception as e:
-        print("Error AI:", str(e))
-        return jsonify({'response': 'Maaf, terjadi kesalahan saat memproses permintaan Anda. Coba lagi nanti.'}), 500
+        error_detail = str(e)
+        print("Error AI:", error_detail)
+        return jsonify({'response': f'⚠️ Error: {error_detail}'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)
