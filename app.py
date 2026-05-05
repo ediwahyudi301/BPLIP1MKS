@@ -1021,8 +1021,11 @@ Pertanyaan pengguna: {user_message}"""
             timeout=30
         )
         
+        if resp.status_code == 429:
+            return jsonify({'response': '⏳ Nina sedang beristirahat sejenak karena terlalu banyak pertanyaan. Mohon tunggu 1 menit lalu coba lagi ya!'}), 429
+        
         if resp.status_code != 200:
-            return jsonify({'response': f'⚠️ Gemini API Error {resp.status_code}: {resp.text[:200]}'}), 500
+            return jsonify({'response': f'⚠️ Terjadi gangguan koneksi ke server AI (Error {resp.status_code}). Coba lagi nanti.'}), 500
         
         answer = resp.json()['candidates'][0]['content']['parts'][0]['text']
         return jsonify({'response': answer})
