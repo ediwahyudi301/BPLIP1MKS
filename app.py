@@ -5,16 +5,10 @@ import pandas as pd
 import requests
 import io
 import os
-try:
-    import google.generativeai as genai
-    GENAI_AVAILABLE = True
-except ImportError:
-    GENAI_AVAILABLE = False
 
 # Konfigurasi Gemini AI (API Key diambil dari Environment Variable)
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-if GEMINI_API_KEY and GENAI_AVAILABLE:
-    genai.configure(api_key=GEMINI_API_KEY)
+GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent"
 
 app = Flask(__name__)
 
@@ -970,13 +964,10 @@ def api_openclaw_summary():
 
 @app.route('/api/agent/chat', methods=['POST'])
 def api_agent_chat():
-    """Endpoint untuk Asisten AI (Nina)."""
+    """Endpoint untuk Asisten AI Nina - menggunakan Gemini REST API langsung."""
     try:
         req_data = request.get_json()
         user_message = req_data.get('message', '')
-
-        if not GENAI_AVAILABLE:
-            return jsonify({'response': '⚠️ Paket google-generativeai tidak tersedia. Pastikan sudah ditambahkan ke requirements.txt dan Vercel sudah di-redeploy.'})
 
         if not GEMINI_API_KEY:
             return jsonify({'response': '⚠️ API Key Gemini belum dikonfigurasi. Silakan tambahkan GEMINI_API_KEY di environment variables Vercel, lalu Redeploy.'})
@@ -984,29 +975,39 @@ def api_agent_chat():
         # Ambil data real-time
         dashboard_data = fetch_dashboard_data()
         
-        # Susun System Prompt
-        system_prompt = f"""Kamu adalah Nina, Asisten AI ramah dan profesional untuk WebGIS Monev BPLIP1 Makassar.
+        # Susun konteks data
+        context_lines = []
+        for prov in dashboard_data.get('regional_status', []):
+            context_lines.append(f"- {prov.get('region')}: Target {prov.get('target')} Ha, Realisasi {prov.get('realized')} Ha (Status: {prov.get('status')})")
+        
+        full_prompt = f"""Kamu adalah Nina, Asisten AI ramah dan profesional untuk WebGIS Monev BPLIP1 Makassar.
 Tugasmu adalah menjawab pertanyaan pengguna seputar proyek cetak sawah.
-Berikut adalah data REAL-TIME saat ini:
+
+Data REAL-TIME saat ini:
 - Total Target: {dashboard_data.get('summary', {}).get('total_area_target', 0)} Ha
 - Total Realisasi: {dashboard_data.get('summary', {}).get('total_area_realized', 0)} Ha
 - Proyek Aktif: {dashboard_data.get('summary', {}).get('active_projects', 0)}
 
 Rincian per provinsi:
-"""
-        for prov in dashboard_data.get('regional_status', []):
-            system_prompt += f"- {prov.get('region')}: Target {prov.get('target')} Ha, Realisasi {prov.get('realized')} Ha (Status: {prov.get('status')})\n"
-            
-        system_prompt += """
-Gunakan data di atas untuk menjawab. Jawablah dengan singkat, ramah, dan langsung ke intinya. Gunakan format Markdown (bold, list) jika perlu. Jangan mengarang data yang tidak ada di daftar atas.
-"""
+{chr(10).join(context_lines)}
+
+Gunakan data di atas untuk menjawab. Jawablah dengan singkat, ramah, dan langsung ke intinya. Gunakan format Markdown (bold, list) jika perlu. Jangan mengarang data yang tidak ada.
+
+Pertanyaan pengguna: {user_message}"""
         
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        chat = model.start_chat(history=[])
-        full_prompt = system_prompt + "\n\nPertanyaan pengguna: " + user_message
-        response = chat.send_message(full_prompt)
+        # Panggil Gemini REST API secara langsung
+        payload = {"contents": [{"parts": [{"text": full_prompt}]}]}
+        resp = requests.post(
+            f"{GEMINI_API_URL}?key={GEMINI_API_KEY}",
+            json=payload,
+            timeout=30
+        )
         
-        return jsonify({'response': response.text})
+        if resp.status_code != 200:
+            return jsonify({'response': f'⚠️ Gemini API Error {resp.status_code}: {resp.text[:200]}'}), 500
+        
+        answer = resp.json()['candidates'][0]['content']['parts'][0]['text']
+        return jsonify({'response': answer})
     except Exception as e:
         error_detail = str(e)
         print("Error AI:", error_detail)
