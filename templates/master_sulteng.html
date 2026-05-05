@@ -164,12 +164,12 @@
                             </button>
                             <div id="dropdown-sulteng"
                                 class="flex flex-col pl-4 mt-2 space-y-2 border-l border-slate-700/50">
-                                <!-- Master Link for Sulsel -->
+                                <!-- Master Link for Sulteng -->
                                 <div class="mb-2">
                                     <a href="{{ url_for('master_sulteng') }}"
                                         class="flex items-center py-2 px-3 bg-emerald-500 text-white rounded-lg text-xs font-bold transition shadow-lg shadow-emerald-500/20">
                                         <i class="fa-solid fa-table-list mr-2"></i>
-                                        MASTER PAKET SULSEL
+                                        MASTER PAKET SULTENG
                                     </a>
                                 </div>
                                 {% for i in range(1, 25) %}
@@ -182,9 +182,6 @@
                                     </button>
                                     <div id="dropdown-sulteng-{{i}}"
                                         class="hidden flex-col pl-4 mt-1 space-y-1 border-l border-slate-700/50">
-                                        <a href="#"
-                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
-                                            Laporan</a>
                                         <a href="{{ url_for('kurva_s') }}?paket=sulteng_{{i}}"
                                             class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
                                             Kurva S</a>
@@ -210,7 +207,7 @@
                             </button>
                             <div id="dropdown-sulbar"
                                 class="hidden flex-col pl-4 mt-2 space-y-2 border-l border-slate-700/50">
-                                {% for i in range(1, 5) %}
+                                {% for i in range(1, 6) %}
                                 <div>
                                     <button type="button" onclick="toggleDropdown('dropdown-sulbar-{{i}}', event)"
                                         class="w-full flex items-center justify-between py-1 text-xs text-slate-400 hover:text-white transition focus:outline-none">
@@ -220,9 +217,6 @@
                                     </button>
                                     <div id="dropdown-sulbar-{{i}}"
                                         class="hidden flex-col pl-4 mt-1 space-y-1 border-l border-slate-700/50">
-                                        <a href="#"
-                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
-                                            Laporan</a>
                                         <a href="{{ url_for('kurva_s') }}?paket=sulbar_{{i}}"
                                             class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
                                             Kurva S</a>

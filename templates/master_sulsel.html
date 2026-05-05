@@ -184,9 +184,6 @@
                                     </button>
                                     <div id="dropdown-sulsel-{{i}}"
                                         class="hidden flex-col pl-4 mt-1 space-y-1 border-l border-slate-700/50">
-                                        <a href="{{ url_for('laporan') }}?paket=sulsel_{{i}}"
-                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
-                                            Laporan</a>
                                         <a href="{{ url_for('kurva_s') }}?paket=sulsel_{{i}}"
                                             class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
                                             Kurva S</a>
@@ -212,7 +209,7 @@
                             </button>
                             <div id="dropdown-sulbar"
                                 class="hidden flex-col pl-4 mt-2 space-y-2 border-l border-slate-700/50">
-                                {% for i in range(1, 5) %}
+                                {% for i in range(1, 6) %}
                                 <div>
                                     <button type="button" onclick="toggleDropdown('dropdown-sulbar-{{i}}', event)"
                                         class="w-full flex items-center justify-between py-1 text-xs text-slate-400 hover:text-white transition focus:outline-none">
@@ -222,9 +219,6 @@
                                     </button>
                                     <div id="dropdown-sulbar-{{i}}"
                                         class="hidden flex-col pl-4 mt-1 space-y-1 border-l border-slate-700/50">
-                                        <a href="#"
-                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
-                                            Laporan</a>
                                         <a href="{{ url_for('kurva_s') }}?paket=sulbar_{{i}}"
                                             class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
                                             Kurva S</a>
@@ -232,6 +226,84 @@
                                             class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
                                             Lokasi</a>
                                         <a href="{{ url_for('realisasi') }}?paket=sulbar_{{i}}&minggu=1"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Realisasi</a>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- C. Sulawesi Tengah -->
+                        <div>
+                            <button type="button" onclick="toggleDropdown('dropdown-sulteng', event)"
+                                class="w-full flex items-center justify-between py-1 text-sm font-medium text-slate-300 hover:text-white transition focus:outline-none">
+                                <span>C. Sulawesi Tengah</span>
+                                <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-300"
+                                    id="icon-dropdown-sulteng"></i>
+                            </button>
+                            <div id="dropdown-sulteng"
+                                class="hidden flex-col pl-4 mt-2 space-y-2 border-l border-slate-700/50">
+                                <!-- Master Link for Sulteng -->
+                                <div class="mb-2">
+                                    <a href="{{ url_for('master_sulteng') }}"
+                                        class="flex items-center py-2 px-3 bg-emerald-500/10 text-emerald-400 rounded-lg text-xs font-bold transition hover:bg-emerald-500/20">
+                                        <i class="fa-solid fa-table-list mr-2"></i>
+                                        MASTER PAKET SULTENG
+                                    </a>
+                                </div>
+                                {% for i in range(1, 12) %}
+                                <div>
+                                    <button type="button" onclick="toggleDropdown('dropdown-sulteng-{{i}}', event)"
+                                        class="w-full flex items-center justify-between py-1 text-xs text-slate-400 hover:text-white transition focus:outline-none">
+                                        <span>{{i}}. Paket Sulawesi Tengah {{i}}</span>
+                                        <i class="fa-solid fa-chevron-down text-[8px] transition-transform duration-300"
+                                            id="icon-dropdown-sulteng-{{i}}"></i>
+                                    </button>
+                                    <div id="dropdown-sulteng-{{i}}"
+                                        class="hidden flex-col pl-4 mt-1 space-y-1 border-l border-slate-700/50">
+                                        <a href="{{ url_for('kurva_s') }}?paket=sulteng_{{i}}"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Kurva S</a>
+                                        <a href="{{ url_for('peta') }}?paket=sulteng_{{i}}"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Lokasi</a>
+                                        <a href="{{ url_for('realisasi') }}?paket=sulteng_{{i}}&minggu=1"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Realisasi</a>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- D. Sulawesi Tenggara -->
+                        <div>
+                            <button type="button" onclick="toggleDropdown('dropdown-sultra', event)"
+                                class="w-full flex items-center justify-between py-1 text-sm font-medium text-slate-300 hover:text-white transition focus:outline-none">
+                                <span>D. Sulawesi Tenggara</span>
+                                <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-300"
+                                    id="icon-dropdown-sultra"></i>
+                            </button>
+                            <div id="dropdown-sultra"
+                                class="hidden flex-col pl-4 mt-2 space-y-2 border-l border-slate-700/50">
+                                {% for i in range(1, 6) %}
+                                <div>
+                                    <button type="button" onclick="toggleDropdown('dropdown-sultra-{{i}}', event)"
+                                        class="w-full flex items-center justify-between py-1 text-xs text-slate-400 hover:text-white transition focus:outline-none">
+                                        <span>{{i}}. Paket Sulawesi Tenggara {{i}}</span>
+                                        <i class="fa-solid fa-chevron-down text-[8px] transition-transform duration-300"
+                                            id="icon-dropdown-sultra-{{i}}"></i>
+                                    </button>
+                                    <div id="dropdown-sultra-{{i}}"
+                                        class="hidden flex-col pl-4 mt-1 space-y-1 border-l border-slate-700/50">
+                                        <a href="{{ url_for('kurva_s') }}?paket=sultra_{{i}}"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Kurva S</a>
+                                        <a href="{{ url_for('peta') }}?paket=sultra_{{i}}"
+                                            class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
+                                            Lokasi</a>
+                                        <a href="{{ url_for('realisasi') }}?paket=sultra_{{i}}&minggu=1"
                                             class="block py-1 text-xs text-slate-500 hover:text-indigo-400 transition">-
                                             Realisasi</a>
                                     </div>
