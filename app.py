@@ -8,7 +8,7 @@ import os
 
 # Konfigurasi Gemini AI (API Key diambil dari Environment Variable)
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
+GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent"
 
 app = Flask(__name__)
 
@@ -1009,10 +1009,14 @@ Gunakan data di atas untuk menjawab. Jawablah dengan singkat, ramah, dan langsun
 
 Pertanyaan pengguna: {user_message}"""
         
-        # Panggil Gemini REST API secara langsung
+        # Panggil Gemini REST API dengan x-goog-api-key header
         payload = {"contents": [{"parts": [{"text": full_prompt}]}]}
         resp = requests.post(
-            f"{GEMINI_API_URL}?key={GEMINI_API_KEY}",
+            GEMINI_API_URL,
+            headers={
+                "Content-Type": "application/json",
+                "x-goog-api-key": GEMINI_API_KEY
+            },
             json=payload,
             timeout=30
         )
