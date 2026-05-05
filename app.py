@@ -4,6 +4,13 @@ from datetime import datetime, timedelta
 import pandas as pd
 import requests
 import io
+import os
+import google.generativeai as genai
+
+# Konfigurasi Gemini AI (API Key diambil dari Environment Variable)
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
 
 app = Flask(__name__)
 
@@ -937,6 +944,63 @@ def realisasi():
                            minggu=minggu,
                            available_weeks=data.get('available_weeks', [1]))
 
+
+@app.route('/api/openclaw/summary')
+def api_openclaw_summary():
+    """Endpoint API khusus untuk OpenClaw atau agen AI lainnya."""
+    try:
+        data = fetch_dashboard_data()
+        summary_data = data.get('summary', {})
+        
+        summary = {
+            'waktu_pengambilan': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            'total_target_ha': summary_data.get('total_area_target', 0),
+            'total_realisasi_ha': summary_data.get('total_area_realized', 0),
+            'provinsi_aktif': summary_data.get('active_projects', 0),
+            'rincian_provinsi': data.get('regional_status', []),
+            'pesan_sistem': 'Ini adalah ringkasan resmi dari WebGIS Monev BPLIP1 Makassar.'
+        }
+        return jsonify(summary)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/agent/chat', methods=['POST'])
+def api_agent_chat():
+    """Endpoint untuk Asisten AI (Nina)."""
+    try:
+        req_data = request.get_json()
+        user_message = req_data.get('message', '')
+
+        if not GEMINI_API_KEY:
+            return jsonify({'response': 'Maaf, API Key Gemini belum dikonfigurasi. Silakan tambahkan GEMINI_API_KEY di environment variables Vercel.'})
+
+        # Ambil data real-time
+        dashboard_data = fetch_dashboard_data()
+        
+        # Susun System Prompt
+        system_prompt = f"""Kamu adalah Nina, Asisten AI ramah dan profesional untuk WebGIS Monev BPLIP1 Makassar.
+Tugasmu adalah menjawab pertanyaan pengguna seputar proyek cetak sawah.
+Berikut adalah data REAL-TIME saat ini:
+- Total Target: {dashboard_data.get('summary', {}).get('total_area_target', 0)} Ha
+- Total Realisasi: {dashboard_data.get('summary', {}).get('total_area_realized', 0)} Ha
+- Proyek Aktif: {dashboard_data.get('summary', {}).get('active_projects', 0)}
+
+Rincian per provinsi:
+"""
+        for prov in dashboard_data.get('regional_status', []):
+            system_prompt += f"- {prov.get('region')}: Target {prov.get('target')} Ha, Realisasi {prov.get('realized')} Ha (Status: {prov.get('status')})\n"
+            
+        system_prompt += """
+Gunakan data di atas untuk menjawab. Jawablah dengan singkat, ramah, dan langsung ke intinya. Gunakan format Markdown (bold, list) jika perlu. Jangan mengarang data yang tidak ada di daftar atas.
+"""
+        
+        model = genai.GenerativeModel('gemini-1.5-flash', system_instruction=system_prompt)
+        response = model.generate_content(user_message)
+        
+        return jsonify({'response': response.text})
+    except Exception as e:
+        print("Error AI:", str(e))
+        return jsonify({'response': 'Maaf, terjadi kesalahan saat memproses permintaan Anda. Coba lagi nanti.'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

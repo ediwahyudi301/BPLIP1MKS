@@ -353,6 +353,54 @@
     </main>
     </div>
 
+    <!-- NINA AI CHAT WIDGET -->
+    <div id="nina-chat-widget" class="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+        <!-- Chat Window -->
+        <div id="nina-chat-window" class="hidden w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 mb-4 flex flex-col overflow-hidden transition-all duration-300 origin-bottom-right">
+            <!-- Header -->
+            <div class="bg-indigo-600 p-4 flex justify-between items-center text-white">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-white/20 flex justify-center items-center">
+                        <i class="fa-solid fa-robot text-sm"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-sm">Nina AI</h3>
+                        <p class="text-[10px] text-indigo-100">Asisten Pintar BPLIP1</p>
+                    </div>
+                </div>
+                <button onclick="toggleNinaChat()" class="text-white/80 hover:text-white focus:outline-none">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <!-- Messages Area -->
+            <div id="nina-messages" class="flex-1 p-4 h-80 overflow-y-auto bg-slate-50 flex flex-col gap-3 text-sm">
+                <div class="flex items-start gap-2 max-w-[85%]">
+                    <div class="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex-shrink-0 flex justify-center items-center mt-1">
+                        <i class="fa-solid fa-robot text-[10px]"></i>
+                    </div>
+                    <div class="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm border border-slate-100 text-slate-700">
+                        Halo! Saya Nina, Asisten AI Anda. Ada yang ingin ditanyakan tentang progres cetak sawah hari ini?
+                    </div>
+                </div>
+            </div>
+            <!-- Input Area -->
+            <div class="p-3 bg-white border-t border-slate-100">
+                <form id="nina-chat-form" class="flex items-center gap-2" onsubmit="sendNinaMessage(event)">
+                    <input type="text" id="nina-input" class="flex-1 bg-slate-100 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all" placeholder="Tanya sesuatu..." autocomplete="off">
+                    <button type="submit" class="w-9 h-9 rounded-full bg-indigo-600 text-white flex justify-center items-center hover:bg-indigo-700 transition-colors focus:outline-none">
+                        <i class="fa-solid fa-paper-plane text-xs relative -ml-0.5 mt-0.5"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Floating Button -->
+        <button onclick="toggleNinaChat()" class="w-14 h-14 bg-indigo-600 rounded-full text-white shadow-lg shadow-indigo-600/40 flex justify-center items-center hover:bg-indigo-700 hover:scale-105 transition-all focus:outline-none relative">
+            <span class="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>
+            <i class="fa-solid fa-message text-xl"></i>
+        </button>
+    </div>
+
     <script>
         window.toggleSidebar = function() {
             const sidebar = document.getElementById('sidebar');
@@ -365,6 +413,85 @@
                 overlay.classList.add('hidden');
             }
         };
+
+        function toggleNinaChat() {
+            const chatWindow = document.getElementById('nina-chat-window');
+            chatWindow.classList.toggle('hidden');
+            if(!chatWindow.classList.contains('hidden')) {
+                document.getElementById('nina-input').focus();
+            }
+        }
+
+        async function sendNinaMessage(e) {
+            e.preventDefault();
+            const input = document.getElementById('nina-input');
+            const msg = input.value.trim();
+            if(!msg) return;
+
+            const messagesArea = document.getElementById('nina-messages');
+
+            // Add User Message
+            messagesArea.innerHTML += `
+                <div class="flex items-start justify-end gap-2 max-w-[85%] self-end">
+                    <div class="bg-indigo-600 p-3 rounded-2xl rounded-tr-none shadow-sm text-white">
+                        ${msg}
+                    </div>
+                </div>
+            `;
+            input.value = '';
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+
+            // Add Loading Indicator
+            const loadingId = 'loading-' + Date.now();
+            messagesArea.innerHTML += `
+                <div id="${loadingId}" class="flex items-start gap-2 max-w-[85%]">
+                    <div class="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex-shrink-0 flex justify-center items-center mt-1">
+                        <i class="fa-solid fa-robot text-[10px]"></i>
+                    </div>
+                    <div class="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm border border-slate-100 text-slate-500 flex gap-1 items-center h-10">
+                        <span class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></span>
+                        <span class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></span>
+                        <span class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></span>
+                    </div>
+                </div>
+            `;
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+
+            try {
+                const response = await fetch('/api/agent/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: msg })
+                });
+                const data = await response.json();
+                
+                document.getElementById(loadingId).remove();
+                
+                // Format Markdown simple (bold and linebreaks)
+                let formattedResponse = data.response.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+                formattedResponse = formattedResponse.replace(/\n/g, '<br>');
+
+                // Add AI Message
+                messagesArea.innerHTML += `
+                    <div class="flex items-start gap-2 max-w-[85%]">
+                        <div class="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 flex-shrink-0 flex justify-center items-center mt-1">
+                            <i class="fa-solid fa-robot text-[10px]"></i>
+                        </div>
+                        <div class="bg-white p-3 rounded-2xl rounded-tl-none shadow-sm border border-slate-100 text-slate-700">
+                            ${formattedResponse}
+                        </div>
+                    </div>
+                `;
+            } catch (err) {
+                document.getElementById(loadingId).remove();
+                messagesArea.innerHTML += `
+                    <div class="flex items-start gap-2 max-w-[85%] text-red-500">
+                        <i>Maaf, Nina sedang mengalami gangguan koneksi.</i>
+                    </div>
+                `;
+            }
+            messagesArea.scrollTop = messagesArea.scrollHeight;
+        }
     </script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
