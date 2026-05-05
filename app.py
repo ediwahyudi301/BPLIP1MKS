@@ -289,18 +289,32 @@ def get_realisasi_data(paket_id, minggu=1):
         return {"error": "Paket ID tidak valid"}
 
     # Base URL for Google Sheets CSV
-    if paket_id.startswith('sulteng_'):
-        base_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQVjsO3yxV0AAmuj3iJjpl2n5P8x-uG2EyQR93uM0Vx41F0J0SptF9rD9t0p3QUx3Zmpc0VAuvjH2vl/pub?output=csv&single=true&sheet="
-    elif paket_id.startswith('sulsel_'):
+    # GID Mapping for Sulsel 6-18
+    SULSEL_GID_MAPPING = {
+        6: '1894372110',
+        7: '451685553',
+        8: '1047753912',
+        9: '731318337',
+        10: '628189697',
+        11: '90232503',
+        12: '152128190',
+        13: '16428034',
+        14: '510399194',
+        15: '1625271799',
+        16: '358284220',
+        17: '1382168881',
+        18: '486747432'
+    }
+    
+    if paket_id.startswith('sulsel_'):
         nomor = int(paket_id.split('_')[1])
         if nomor >= 6:
-            base_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS0JKAKWKm4WZMXtFp_jFYgz7_RNpse8FBl9jw6M8TkTwZWTQEhoEUGQuNNMJLLQRVg0kE4bs-HdDsz/pub?output=csv&single=true&sheet="
+            gid = SULSEL_GID_MAPPING.get(nomor, '')
+            url = f"https://docs.google.com/spreadsheets/d/e/2PACX-1vS0JKAKWKm4WZMXtFp_jFYgz7_RNpse8FBl9jw6M8TkTwZWTQEhoEUGQuNNMJLLQRVg0kE4bs-HdDsz/pub?output=csv&single=true&gid={gid}"
         else:
-            base_url = "https://docs.google.com/spreadsheets/d/1fPOem8nUIiQlhYbnZBDPafutAeaUMkKZBO6_0zRAqoQ/gviz/tq?tqx=out:csv&sheet="
+            url = f"https://docs.google.com/spreadsheets/d/1fPOem8nUIiQlhYbnZBDPafutAeaUMkKZBO6_0zRAqoQ/gviz/tq?tqx=out:csv&sheet={sheet_name}"
     else:
-        base_url = "https://docs.google.com/spreadsheets/d/1fPOem8nUIiQlhYbnZBDPafutAeaUMkKZBO6_0zRAqoQ/gviz/tq?tqx=out:csv&sheet="
-    
-    url = base_url + sheet_name
+        url = f"https://docs.google.com/spreadsheets/d/1fPOem8nUIiQlhYbnZBDPafutAeaUMkKZBO6_0zRAqoQ/gviz/tq?tqx=out:csv&sheet={sheet_name}"
 
     try:
         req = requests.get(url)
@@ -317,6 +331,16 @@ def get_realisasi_data(paket_id, minggu=1):
         v_idx, h_idx, b_idx, rl_idx, rm_idx, rt_idx, d_idx = 11, 12, 16, 18, 19, 21, 23 # Default SULSEL1?
         if 'SULSEL5' in sheet_name:
             v_idx, h_idx, b_idx, rl_idx, rm_idx, rt_idx, d_idx = 11, 13, 14, 17, 19, 18, 24
+        elif paket_id.startswith('sulsel_') and int(paket_id.split('_')[1]) >= 6:
+            # Layout untuk Paket 6-18 di Spreadsheet Baru
+            # No: 1, Uraian: 2, Vol: 11, Harga: 12, Bobot: 14, RL: 16, RM: 18, RT: 20, Dev: 24
+            v_idx, h_idx, b_idx, rl_idx, rm_idx, rt_idx, d_idx = 11, 12, 14, 16, 18, 20, 24
+            no_col_idx = 1 # Column B
+            uraian_col_idx = 2 # Column C
+        else:
+            # Default indexing
+            no_col_idx = 1
+            uraian_col_idx = 2
             
         import re
         # First pass: find all available weeks
@@ -365,11 +389,11 @@ def get_realisasi_data(paket_id, minggu=1):
                     project_info['pengawas'] = get_val(row, 'PENGAWAS')
                 
                 # Detect the table start (No 1, 2, 3...)
-                no_val = str(row.iloc[1]).strip()
-                uraian_val = str(row.iloc[2]).strip()
+                no_val = str(row.iloc[no_col_idx]).strip()
+                uraian_val = str(row.iloc[uraian_col_idx]).strip()
                 
-                # Skip header labels like No 1, Uraian 2
-                if no_val == '1' and uraian_val == '2':
+                # Skip header labels
+                if no_val == '1' and (uraian_val == '2' or 'URAIAN' in uraian_val.upper()):
                     continue
 
                 if no_val.isdigit() or (len(no_val) == 1 and no_val.isalpha() and no_val.isupper()):
@@ -564,12 +588,28 @@ def get_kurva_s(paket_id):
         nomor = paket_id.split('_')[1]
         sheet_name = f'PAKET_SULTRA{nomor}'
     
-    if paket_id.startswith('sulteng_'):
-        url = f"https://docs.google.com/spreadsheets/d/e/2PACX-1vQVjsO3yxV0AAmuj3iJjpl2n5P8x-uG2EyQR93uM0Vx41F0J0SptF9rD9t0p3QUx3Zmpc0VAuvjH2vl/pub?output=csv&single=true&sheet={sheet_name}"
-    elif paket_id.startswith('sulsel_'):
+    # GID Mapping for Sulsel 6-18
+    SULSEL_GID_MAPPING = {
+        6: '1894372110',
+        7: '451685553',
+        8: '1047753912',
+        9: '731318337',
+        10: '628189697',
+        11: '90232503',
+        12: '152128190',
+        13: '16428034',
+        14: '510399194',
+        15: '1625271799',
+        16: '358284220',
+        17: '1382168881',
+        18: '486747432'
+    }
+    
+    if paket_id.startswith('sulsel_'):
         nomor = int(paket_id.split('_')[1])
         if nomor >= 6:
-            url = f"https://docs.google.com/spreadsheets/d/e/2PACX-1vS0JKAKWKm4WZMXtFp_jFYgz7_RNpse8FBl9jw6M8TkTwZWTQEhoEUGQuNNMJLLQRVg0kE4bs-HdDsz/pub?output=csv&single=true&sheet={sheet_name}"
+            gid = SULSEL_GID_MAPPING.get(nomor, '')
+            url = f"https://docs.google.com/spreadsheets/d/e/2PACX-1vS0JKAKWKm4WZMXtFp_jFYgz7_RNpse8FBl9jw6M8TkTwZWTQEhoEUGQuNNMJLLQRVg0kE4bs-HdDsz/pub?output=csv&single=true&gid={gid}"
         else:
             url = f"https://docs.google.com/spreadsheets/d/1fPOem8nUIiQlhYbnZBDPafutAeaUMkKZBO6_0zRAqoQ/gviz/tq?tqx=out:csv&sheet={sheet_name}"
     else:
@@ -915,8 +955,8 @@ def laporan():
     # Ambil ID folder dari dictionary, jika tidak ada fallback ke folder utama
     folder_id = DRIVE_FOLDER_MAPPING.get(paket, '1HCmAUjk0Yd4O4OzQXQ2jEIXDIaaLq2RO')
     
-    # Kosongkan folder_id untuk Sulsel 1-24 sesuai permintaan user
-    if paket.startswith('sulsel_'):
+    # Kosongkan folder_id untuk Sulsel jika tidak ada di mapping
+    if paket.startswith('sulsel_') and not DRIVE_FOLDER_MAPPING.get(paket):
         folder_id = ""
     
     return render_template('laporan.html', paket=paket, folder_id=folder_id)
