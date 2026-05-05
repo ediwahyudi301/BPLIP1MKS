@@ -14,6 +14,10 @@ GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_API = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}"
 
+# Cache sederhana untuk AI
+ai_response_cache = {} # Format: { 'normalized_message': (timestamp, 'answer') }
+CACHE_TTL_MINUTES = 10
+
 app = Flask(__name__)
 
 SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR1b8XGbfCcCshv9MXfdQ8sHR5KfiT-l6zBf39YcrvicmJccREctopoq79hCEfzq5hnya_hM_LxtwML/pub?gid=684955607&single=true&output=csv"
@@ -1039,9 +1043,21 @@ Pertanyaan pengguna: {user_message}"""
         return jsonify({'response': f'⚠️ Error: {error_detail}'}), 500
 
 def ask_nina(user_message):
-    """Fungsi inti Nina AI - dapat dipanggil dari web maupun Telegram."""
+    """Fungsi inti Nina AI dengan sistem Cache untuk menghemat kuota API."""
     if not GEMINI_API_KEY:
         return '⚠️ API Key Gemini belum dikonfigurasi.'
+    
+    # 1. Cek Cache terlebih dahulu
+    msg_key = user_message.lower().strip()
+    now = datetime.now()
+    
+    if msg_key in ai_response_cache:
+        timestamp, cached_reply = ai_response_cache[msg_key]
+        # Jika cache masih berlaku (kurang dari CACHE_TTL_MINUTES)
+        if now - timestamp < timedelta(minutes=CACHE_TTL_MINUTES):
+            print(f"DEBUG: Menggunakan CACHE untuk: {msg_key}")
+            return cached_reply
+
     try:
         dashboard_data = fetch_dashboard_data()
         context_lines = []
@@ -1070,11 +1086,19 @@ Pertanyaan: {user_message}"""
             json=payload,
             timeout=30
         )
+        
         if resp.status_code == 429:
             return '⏳ Nina sedang istirahat sejenak, terlalu banyak pertanyaan. Coba lagi dalam 1 menit ya!'
+        
         if resp.status_code != 200:
             return f'⚠️ Gangguan koneksi ke server AI (Error {resp.status_code}).'
-        return resp.json()['candidates'][0]['content']['parts'][0]['text']
+        
+        answer = resp.json()['candidates'][0]['content']['parts'][0]['text']
+        
+        # 2. Simpan ke Cache jika berhasil
+        ai_response_cache[msg_key] = (now, answer)
+        return answer
+        
     except Exception as e:
         return f'⚠️ Error: {str(e)}'
 
