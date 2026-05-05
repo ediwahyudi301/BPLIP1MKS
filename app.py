@@ -1001,8 +1001,10 @@ Rincian per provinsi:
 Gunakan data di atas untuk menjawab. Jawablah dengan singkat, ramah, dan langsung ke intinya. Gunakan format Markdown (bold, list) jika perlu. Jangan mengarang data yang tidak ada di daftar atas.
 """
         
-        model = genai.GenerativeModel('gemini-1.5-flash', system_instruction=system_prompt)
-        response = model.generate_content(user_message)
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        chat = model.start_chat(history=[])
+        full_prompt = system_prompt + "\n\nPertanyaan pengguna: " + user_message
+        response = chat.send_message(full_prompt)
         
         return jsonify({'response': response.text})
     except Exception as e:
