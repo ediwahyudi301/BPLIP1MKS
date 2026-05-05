@@ -8,7 +8,7 @@ import os
 
 # Konfigurasi Gemini AI (API Key diambil dari Environment Variable)
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent"
 
 app = Flask(__name__)
 
