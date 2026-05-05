@@ -260,9 +260,10 @@
                                 <!-- Logo Template -->
                                 <div
                                     class="w-10 h-10 rounded-full bg-slate-800 overflow-hidden flex items-center justify-center border border-slate-600 shadow-inner shrink-0">
-                                    <!-- Replace with img tag below when logo is available -->
-                                    <!-- <img src="URL_LOGO_PENGAWAS" alt="Logo Pengawas" class="w-full h-full object-cover"> -->
-                                    <img src="{{ url_for('static', filename='img/pnup.png') }}" alt="Logo Pengawas"
+                                    <!-- Logo Selection Logic -->
+                                    {% set paket_num = paket.split('_')[1]|int if '_' in paket else 0 %}
+                                    {% set logo_name = 'unm.png' if paket.startswith('sulsel_') and paket_num >= 6 and paket_num <= 18 else 'pnup.png' %}
+                                    <img src="{{ url_for('static', filename='img/' + logo_name) }}" alt="Logo Pengawas"
                                         class="w-full h-full object-cover bg-white">
 
                                 </div>
