@@ -10,6 +10,10 @@ import os
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent"
 
+# Konfigurasi Telegram Bot
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_API = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}"
+
 app = Flask(__name__)
 
 SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vR1b8XGbfCcCshv9MXfdQ8sHR5KfiT-l6zBf39YcrvicmJccREctopoq79hCEfzq5hnya_hM_LxtwML/pub?gid=684955607&single=true&output=csv"
@@ -1033,6 +1037,96 @@ Pertanyaan pengguna: {user_message}"""
         error_detail = str(e)
         print("Error AI:", error_detail)
         return jsonify({'response': f'⚠️ Error: {error_detail}'}), 500
+
+def ask_nina(user_message):
+    """Fungsi inti Nina AI - dapat dipanggil dari web maupun Telegram."""
+    if not GEMINI_API_KEY:
+        return '⚠️ API Key Gemini belum dikonfigurasi.'
+    try:
+        dashboard_data = fetch_dashboard_data()
+        context_lines = []
+        for prov in dashboard_data.get('regional_status', []):
+            context_lines.append(f"- {prov.get('region')}: Target {prov.get('target')} Ha, Realisasi {prov.get('realized')} Ha (Status: {prov.get('status')})")
+
+        full_prompt = f"""Kamu adalah Nina, Asisten AI ramah dan profesional untuk WebGIS Monev BPLIP1 Makassar.
+Tugasmu adalah menjawab pertanyaan pengguna seputar proyek cetak sawah.
+
+Data REAL-TIME saat ini:
+- Total Target: {dashboard_data.get('summary', {}).get('total_area_target', 0)} Ha
+- Total Realisasi: {dashboard_data.get('summary', {}).get('total_area_realized', 0)} Ha
+- Proyek Aktif: {dashboard_data.get('summary', {}).get('active_projects', 0)}
+
+Rincian per provinsi:
+{chr(10).join(context_lines)}
+
+Gunakan data di atas untuk menjawab. Jawablah dengan singkat, ramah, dan langsung ke intinya. Jangan mengarang data yang tidak ada.
+
+Pertanyaan: {user_message}"""
+
+        payload = {"contents": [{"parts": [{"text": full_prompt}]}]}
+        resp = requests.post(
+            GEMINI_API_URL,
+            headers={"Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY},
+            json=payload,
+            timeout=30
+        )
+        if resp.status_code == 429:
+            return '⏳ Nina sedang istirahat sejenak, terlalu banyak pertanyaan. Coba lagi dalam 1 menit ya!'
+        if resp.status_code != 200:
+            return f'⚠️ Gangguan koneksi ke server AI (Error {resp.status_code}).'
+        return resp.json()['candidates'][0]['content']['parts'][0]['text']
+    except Exception as e:
+        return f'⚠️ Error: {str(e)}'
+
+
+@app.route('/webhook/telegram', methods=['POST'])
+def telegram_webhook():
+    """Endpoint webhook untuk menerima pesan dari Telegram."""
+    try:
+        data = request.get_json()
+        message = data.get('message', {})
+        chat_id = message.get('chat', {}).get('id')
+        user_text = message.get('text', '').strip()
+
+        if not chat_id or not user_text:
+            return jsonify({'ok': True})
+
+        # Abaikan command /start
+        if user_text == '/start':
+            reply = '👋 Halo! Saya *Nina*, Asisten AI BPLIP1 Makassar.\n\nSilakan tanyakan apa saja tentang progres cetak sawah, target luasan, atau status per provinsi!'
+        else:
+            reply = ask_nina(user_text)
+
+        # Kirim balasan ke Telegram
+        requests.post(
+            f"{TELEGRAM_API}/sendMessage",
+            json={
+                'chat_id': chat_id,
+                'text': reply,
+                'parse_mode': 'Markdown'
+            },
+            timeout=15
+        )
+        return jsonify({'ok': True})
+    except Exception as e:
+        print('Telegram webhook error:', str(e))
+        return jsonify({'ok': True})
+
+
+@app.route('/api/set_webhook')
+def set_telegram_webhook():
+    """Helper untuk mendaftarkan webhook URL ke Telegram (jalankan sekali)."""
+    if not TELEGRAM_BOT_TOKEN:
+        return jsonify({'error': 'TELEGRAM_BOT_TOKEN belum dikonfigurasi di Vercel'})
+    vercel_url = request.host_url.rstrip('/')
+    webhook_url = f"{vercel_url}/webhook/telegram"
+    resp = requests.post(
+        f"{TELEGRAM_API}/setWebhook",
+        json={'url': webhook_url},
+        timeout=10
+    )
+    return jsonify({'status': resp.status_code, 'result': resp.json(), 'webhook_url': webhook_url})
+
 
 if __name__ == '__main__':
     app.run(debug=True)
