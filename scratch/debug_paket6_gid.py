@@ -1,0 +1,23 @@
+import requests
+import pandas as pd
+import io
+
+def debug_paket6_correct_gid():
+    # Use the correct GID for PAKET_SULSEL6
+    url6 = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS0JKAKWKm4WZMXtFp_jFYgz7_RNpse8FBl9jw6M8TkTwZWTQEhoEUGQuNNMJLLQRVg0kE4bs-HdDsz/pub?output=csv&single=true&gid=1894372110"
+    try:
+        r6 = requests.get(url6)
+        df6 = pd.read_csv(io.StringIO(r6.text), header=None)
+        print(f"Total rows: {len(df6)}")
+        print("Searching for progress headers...")
+        for i, row in df6.iterrows():
+            row_joined = ' '.join(str(cell).upper() for cell in row)
+            if "PROGRES REALISASI MINGGUAN" in row_joined or "MINGGU" in row_joined:
+                print(f"Row {i}: {row_joined[:100]}")
+                # Print specific columns to check indices
+                print(f"  Columns: {row.tolist()[:15]}")
+    except Exception as e:
+        print(f"Error: {e}")
+
+if __name__ == "__main__":
+    debug_paket6_correct_gid()

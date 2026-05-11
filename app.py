@@ -1,5 +1,8 @@
 from flask import Flask, render_template, jsonify, request
 from datetime import datetime, timedelta
+from dotenv import load_dotenv
+
+load_dotenv()  # Baca .env otomatis saat development lokal
 
 import pandas as pd
 import requests
@@ -8,7 +11,11 @@ import os
 
 # Konfigurasi Gemini AI (API Key diambil dari Environment Variable)
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent"
+# List of models to try in fallback order
+GEMINI_API_URLS = [
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent",
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+]
 
 # Konfigurasi Telegram Bot
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
@@ -1057,25 +1064,45 @@ Gunakan data di atas untuk menjawab. Jawablah dengan singkat, ramah, dan langsun
 
 Pertanyaan pengguna: {user_message}"""
         
-        # Panggil Gemini REST API dengan x-goog-api-key header
+        # Cek Cache sebelum panggil Gemini API
+        msg_key = user_message.lower().strip()
+        now = datetime.now()
+        if msg_key in ai_response_cache:
+            timestamp, cached_reply = ai_response_cache[msg_key]
+            if now - timestamp < timedelta(minutes=CACHE_TTL_MINUTES):
+                print(f"DEBUG: Cache HIT untuk: {msg_key}")
+                return jsonify({'response': cached_reply})
+
+        # Fungsi eksekusi API dengan retry dan fallback
+        answer = None
+        status_code = 500
+        import time
         payload = {"contents": [{"parts": [{"text": full_prompt}]}]}
-        resp = requests.post(
-            GEMINI_API_URL,
-            headers={
-                "Content-Type": "application/json",
-                "x-goog-api-key": GEMINI_API_KEY
-            },
-            json=payload,
-            timeout=30
-        )
+        headers = {"Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY}
         
-        if resp.status_code == 429:
-            return jsonify({'response': '⏳ Nina sedang beristirahat sejenak karena terlalu banyak pertanyaan. Mohon tunggu 1 menit lalu coba lagi ya!'}), 429
+        for url in GEMINI_API_URLS:
+            for attempt in range(2): # Max 2 attempts per model
+                resp = requests.post(url, headers=headers, json=payload, timeout=30)
+                status_code = resp.status_code
+                if status_code == 200:
+                    answer = resp.json()['candidates'][0]['content']['parts'][0]['text']
+                    break
+                elif status_code == 429:
+                    time.sleep(2) # Backoff 2 detik jika rate limit
+                    continue
+                else:
+                    break # Error lain, coba model selanjutnya
+            if answer:
+                break
+                
+        if status_code == 429 and not answer:
+            return jsonify({'response': '⏳ Nina sedang beristirahat sejenak karena batasan API gratis. Mohon tunggu 1 menit lalu coba lagi ya!'}), 429
+            
+        if not answer:
+            return jsonify({'response': f'⚠️ Terjadi gangguan koneksi ke server AI (Error {status_code}). Coba lagi nanti.'}), 500
         
-        if resp.status_code != 200:
-            return jsonify({'response': f'⚠️ Terjadi gangguan koneksi ke server AI (Error {resp.status_code}). Coba lagi nanti.'}), 500
-        
-        answer = resp.json()['candidates'][0]['content']['parts'][0]['text']
+        # Simpan ke Cache agar pertanyaan sama tidak panggil API lagi
+        ai_response_cache[msg_key] = (now, answer)
         return jsonify({'response': answer})
     except Exception as e:
         error_detail = str(e)
@@ -1119,21 +1146,33 @@ Gunakan data di atas untuk menjawab. Jawablah dengan singkat, ramah, dan langsun
 
 Pertanyaan: {user_message}"""
 
+        import time
         payload = {"contents": [{"parts": [{"text": full_prompt}]}]}
-        resp = requests.post(
-            GEMINI_API_URL,
-            headers={"Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY},
-            json=payload,
-            timeout=30
-        )
+        headers = {"Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY}
         
-        if resp.status_code == 429:
-            return '⏳ Nina sedang istirahat sejenak, terlalu banyak pertanyaan. Coba lagi dalam 1 menit ya!'
+        answer = None
+        status_code = 500
         
-        if resp.status_code != 200:
-            return f'⚠️ Gangguan koneksi ke server AI (Error {resp.status_code}).'
+        for url in GEMINI_API_URLS:
+            for attempt in range(2):
+                resp = requests.post(url, headers=headers, json=payload, timeout=30)
+                status_code = resp.status_code
+                if status_code == 200:
+                    answer = resp.json()['candidates'][0]['content']['parts'][0]['text']
+                    break
+                elif status_code == 429:
+                    time.sleep(2)
+                    continue
+                else:
+                    break
+            if answer:
+                break
         
-        answer = resp.json()['candidates'][0]['content']['parts'][0]['text']
+        if status_code == 429 and not answer:
+            return '⏳ Nina sedang istirahat sejenak karena batasan API gratis. Coba lagi dalam 1 menit ya!'
+            
+        if not answer:
+            return f'⚠️ Gangguan koneksi ke server AI (Error {status_code}).'
         
         # 2. Simpan ke Cache jika berhasil
         ai_response_cache[msg_key] = (now, answer)
