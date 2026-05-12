@@ -1016,9 +1016,9 @@ def api_openclaw_summary():
 
 @app.route('/api/agent/test')
 def api_agent_test():
-    """Endpoint untuk mengetes koneksi ke Groq API."""
+    """Endpoint untuk mengetes koneksi ke Groq API (Versi Terbaru 12 Mei)."""
     if not GROQ_API_KEY:
-        return jsonify({'status': 'error', 'message': 'GROQ_API_KEY tidak ditemukan di environment variables'})
+        return jsonify({'status': 'error', 'message': 'GROQ_API_KEY (NEW) tidak ditemukan di environment variables'})
     try:
         resp = requests.get(
             "https://api.groq.com/openai/v1/models",
