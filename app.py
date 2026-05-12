@@ -10,7 +10,7 @@ import io
 import os
 
 # Konfigurasi Groq AI (API Key diambil dari Environment Variable)
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "").strip()
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 GROQ_MODEL = "llama-3.3-70b-versatile"  # Model utama Groq yang kencang
 
@@ -1025,7 +1025,13 @@ def api_agent_test():
             headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
             timeout=10
         )
-        return jsonify({'status': resp.status_code, 'body': resp.json()})
+        # Kembalikan detail error jika ada (terutama untuk diagnosa 401)
+        return jsonify({
+            'status': resp.status_code, 
+            'key_length': len(GROQ_API_KEY),
+            'key_preview': f"{GROQ_API_KEY[:4]}...{GROQ_API_KEY[-4:]}" if len(GROQ_API_KEY) > 8 else "too short",
+            'body': resp.json()
+        })
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
 
