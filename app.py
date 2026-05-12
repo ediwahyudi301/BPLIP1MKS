@@ -9,13 +9,10 @@ import requests
 import io
 import os
 
-# Konfigurasi Gemini AI (API Key diambil dari Environment Variable)
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-# List of models to try in fallback order
-GEMINI_API_URLS = [
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent",
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
-]
+# Konfigurasi OpenAI GPT-4o (API Key diambil dari Environment Variable)
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+OPENAI_API_URL = "https://api.openai.com/v1/chat/completions"
+OPENAI_MODEL = "gpt-4o"  # Model utama
 
 # Konfigurasi Telegram Bot
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
@@ -1019,12 +1016,13 @@ def api_openclaw_summary():
 
 @app.route('/api/agent/test')
 def api_agent_test():
-    """Endpoint untuk mengetes koneksi ke Gemini API."""
-    if not GEMINI_API_KEY:
-        return jsonify({'status': 'error', 'message': 'GEMINI_API_KEY tidak ditemukan di environment variables'})
+    """Endpoint untuk mengetes koneksi ke OpenAI API."""
+    if not OPENAI_API_KEY:
+        return jsonify({'status': 'error', 'message': 'OPENAI_API_KEY tidak ditemukan di environment variables'})
     try:
         resp = requests.get(
-            f"https://generativelanguage.googleapis.com/v1beta/models?key={GEMINI_API_KEY}",
+            "https://api.openai.com/v1/models",
+            headers={"Authorization": f"Bearer {OPENAI_API_KEY}"},
             timeout=10
         )
         return jsonify({'status': resp.status_code, 'body': resp.json()})
@@ -1033,13 +1031,13 @@ def api_agent_test():
 
 @app.route('/api/agent/chat', methods=['POST'])
 def api_agent_chat():
-    """Endpoint untuk Asisten AI Nina - menggunakan Gemini REST API langsung."""
+    """Endpoint untuk Asisten AI Nina - menggunakan OpenAI GPT-4o REST API."""
     try:
         req_data = request.get_json()
         user_message = req_data.get('message', '')
 
-        if not GEMINI_API_KEY:
-            return jsonify({'response': '⚠️ API Key Gemini belum dikonfigurasi. Silakan tambahkan GEMINI_API_KEY di environment variables Vercel, lalu Redeploy.'})
+        if not OPENAI_API_KEY:
+            return jsonify({'response': '⚠️ API Key OpenAI belum dikonfigurasi. Silakan tambahkan OPENAI_API_KEY di environment variables Vercel, lalu Redeploy.'})
 
         # Ambil data real-time
         dashboard_data = fetch_dashboard_data()
@@ -1049,7 +1047,7 @@ def api_agent_chat():
         for prov in dashboard_data.get('regional_status', []):
             context_lines.append(f"- {prov.get('region')}: Target {prov.get('target')} Ha, Realisasi {prov.get('realized')} Ha (Status: {prov.get('status')})")
         
-        full_prompt = f"""Kamu adalah Nina, Asisten AI ramah dan profesional untuk WebGIS Monev BPLIP1 Makassar.
+        system_prompt = f"""Kamu adalah Nina, Asisten AI ramah dan profesional untuk WebGIS Monev BPLIP1 Makassar.
 Tugasmu adalah menjawab pertanyaan pengguna seputar proyek cetak sawah.
 
 Data REAL-TIME saat ini:
@@ -1060,11 +1058,9 @@ Data REAL-TIME saat ini:
 Rincian per provinsi:
 {chr(10).join(context_lines)}
 
-Gunakan data di atas untuk menjawab. Jawablah dengan singkat, ramah, dan langsung ke intinya. Gunakan format Markdown (bold, list) jika perlu. Jangan mengarang data yang tidak ada.
-
-Pertanyaan pengguna: {user_message}"""
+Gunakan data di atas untuk menjawab. Jawablah dengan singkat, ramah, dan langsung ke intinya. Gunakan format Markdown (bold, list) jika perlu. Jangan mengarang data yang tidak ada."""
         
-        # Cek Cache sebelum panggil Gemini API
+        # Cek Cache sebelum panggil OpenAI API
         msg_key = user_message.lower().strip()
         now = datetime.now()
         if msg_key in ai_response_cache:
@@ -1073,30 +1069,40 @@ Pertanyaan pengguna: {user_message}"""
                 print(f"DEBUG: Cache HIT untuk: {msg_key}")
                 return jsonify({'response': cached_reply})
 
-        # Fungsi eksekusi API dengan retry dan fallback
+        # Panggil OpenAI Chat Completions API dengan retry
+        import time
+        payload = {
+            "model": OPENAI_MODEL,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_message}
+            ],
+            "max_tokens": 1000,
+            "temperature": 0.7
+        }
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {OPENAI_API_KEY}"
+        }
+        
         answer = None
         status_code = 500
-        import time
-        payload = {"contents": [{"parts": [{"text": full_prompt}]}]}
-        headers = {"Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY}
         
-        for url in GEMINI_API_URLS:
-            for attempt in range(2): # Max 2 attempts per model
-                resp = requests.post(url, headers=headers, json=payload, timeout=30)
-                status_code = resp.status_code
-                if status_code == 200:
-                    answer = resp.json()['candidates'][0]['content']['parts'][0]['text']
-                    break
-                elif status_code == 429:
-                    time.sleep(2) # Backoff 2 detik jika rate limit
-                    continue
-                else:
-                    break # Error lain, coba model selanjutnya
-            if answer:
+        for attempt in range(3):  # Max 3 attempts
+            resp = requests.post(OPENAI_API_URL, headers=headers, json=payload, timeout=30)
+            status_code = resp.status_code
+            if status_code == 200:
+                answer = resp.json()['choices'][0]['message']['content']
+                break
+            elif status_code == 429:
+                time.sleep(3)  # Backoff 3 detik jika rate limit
+                continue
+            else:
+                print(f"OpenAI API Error: {resp.status_code} - {resp.text}")
                 break
                 
         if status_code == 429 and not answer:
-            return jsonify({'response': '⏳ Nina sedang beristirahat sejenak karena batasan API gratis. Mohon tunggu 1 menit lalu coba lagi ya!'}), 429
+            return jsonify({'response': '⏳ Nina sedang beristirahat sejenak karena batasan kuota API. Mohon tunggu 1 menit lalu coba lagi ya!'}), 429
             
         if not answer:
             return jsonify({'response': f'⚠️ Terjadi gangguan koneksi ke server AI (Error {status_code}). Coba lagi nanti.'}), 500
@@ -1110,9 +1116,9 @@ Pertanyaan pengguna: {user_message}"""
         return jsonify({'response': f'⚠️ Error: {error_detail}'}), 500
 
 def ask_nina(user_message):
-    """Fungsi inti Nina AI dengan sistem Cache untuk menghemat kuota API."""
-    if not GEMINI_API_KEY:
-        return '⚠️ API Key Gemini belum dikonfigurasi.'
+    """Fungsi inti Nina AI dengan sistem Cache untuk menghemat kuota API (OpenAI GPT-4o)."""
+    if not OPENAI_API_KEY:
+        return '⚠️ API Key OpenAI belum dikonfigurasi.'
     
     # 1. Cek Cache terlebih dahulu
     msg_key = user_message.lower().strip()
@@ -1131,7 +1137,7 @@ def ask_nina(user_message):
         for prov in dashboard_data.get('regional_status', []):
             context_lines.append(f"- {prov.get('region')}: Target {prov.get('target')} Ha, Realisasi {prov.get('realized')} Ha (Status: {prov.get('status')})")
 
-        full_prompt = f"""Kamu adalah Nina, Asisten AI ramah dan profesional untuk WebGIS Monev BPLIP1 Makassar.
+        system_prompt = f"""Kamu adalah Nina, Asisten AI ramah dan profesional untuk WebGIS Monev BPLIP1 Makassar.
 Tugasmu adalah menjawab pertanyaan pengguna seputar proyek cetak sawah.
 
 Data REAL-TIME saat ini:
@@ -1142,34 +1148,40 @@ Data REAL-TIME saat ini:
 Rincian per provinsi:
 {chr(10).join(context_lines)}
 
-Gunakan data di atas untuk menjawab. Jawablah dengan singkat, ramah, dan langsung ke intinya. Jangan mengarang data yang tidak ada.
-
-Pertanyaan: {user_message}"""
+Gunakan data di atas untuk menjawab. Jawablah dengan singkat, ramah, dan langsung ke intinya. Jangan mengarang data yang tidak ada."""
 
         import time
-        payload = {"contents": [{"parts": [{"text": full_prompt}]}]}
-        headers = {"Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY}
+        payload = {
+            "model": OPENAI_MODEL,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_message}
+            ],
+            "max_tokens": 1000,
+            "temperature": 0.7
+        }
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {OPENAI_API_KEY}"
+        }
         
         answer = None
         status_code = 500
         
-        for url in GEMINI_API_URLS:
-            for attempt in range(2):
-                resp = requests.post(url, headers=headers, json=payload, timeout=30)
-                status_code = resp.status_code
-                if status_code == 200:
-                    answer = resp.json()['candidates'][0]['content']['parts'][0]['text']
-                    break
-                elif status_code == 429:
-                    time.sleep(2)
-                    continue
-                else:
-                    break
-            if answer:
+        for attempt in range(3):
+            resp = requests.post(OPENAI_API_URL, headers=headers, json=payload, timeout=30)
+            status_code = resp.status_code
+            if status_code == 200:
+                answer = resp.json()['choices'][0]['message']['content']
+                break
+            elif status_code == 429:
+                time.sleep(3)
+                continue
+            else:
                 break
         
         if status_code == 429 and not answer:
-            return '⏳ Nina sedang istirahat sejenak karena batasan API gratis. Coba lagi dalam 1 menit ya!'
+            return '⏳ Nina sedang istirahat sejenak karena batasan kuota API. Coba lagi dalam 1 menit ya!'
             
         if not answer:
             return f'⚠️ Gangguan koneksi ke server AI (Error {status_code}).'
