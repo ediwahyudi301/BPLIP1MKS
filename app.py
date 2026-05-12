@@ -10,6 +10,7 @@ import io
 import os
 
 # Konfigurasi OpenAI GPT-4o (API Key diambil dari Environment Variable)
+# Versi Update: 12 Mei 2026
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 OPENAI_API_URL = "https://api.openai.com/v1/chat/completions"
 OPENAI_MODEL = "gpt-4o"  # Model utama
