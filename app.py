@@ -9,11 +9,10 @@ import requests
 import io
 import os
 
-# Konfigurasi OpenAI GPT-4o (API Key diambil dari Environment Variable)
-# Versi Update: 12 Mei 2026
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
-OPENAI_API_URL = "https://api.openai.com/v1/chat/completions"
-OPENAI_MODEL = "gpt-4o"  # Model utama
+# Konfigurasi Groq AI (API Key diambil dari Environment Variable)
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
+GROQ_MODEL = "llama-3.3-70b-versatile"  # Model utama Groq yang kencang
 
 # Konfigurasi Telegram Bot
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
@@ -1017,13 +1016,13 @@ def api_openclaw_summary():
 
 @app.route('/api/agent/test')
 def api_agent_test():
-    """Endpoint untuk mengetes koneksi ke OpenAI API."""
-    if not OPENAI_API_KEY:
-        return jsonify({'status': 'error', 'message': 'OPENAI_API_KEY tidak ditemukan di environment variables'})
+    """Endpoint untuk mengetes koneksi ke Groq API."""
+    if not GROQ_API_KEY:
+        return jsonify({'status': 'error', 'message': 'GROQ_API_KEY tidak ditemukan di environment variables'})
     try:
         resp = requests.get(
-            "https://api.openai.com/v1/models",
-            headers={"Authorization": f"Bearer {OPENAI_API_KEY}"},
+            "https://api.groq.com/openai/v1/models",
+            headers={"Authorization": f"Bearer {GROQ_API_KEY}"},
             timeout=10
         )
         return jsonify({'status': resp.status_code, 'body': resp.json()})
@@ -1032,13 +1031,13 @@ def api_agent_test():
 
 @app.route('/api/agent/chat', methods=['POST'])
 def api_agent_chat():
-    """Endpoint untuk Asisten AI Nina - menggunakan OpenAI GPT-4o REST API."""
+    """Endpoint untuk Asisten AI Nina - menggunakan Groq REST API."""
     try:
         req_data = request.get_json()
         user_message = req_data.get('message', '')
 
-        if not OPENAI_API_KEY:
-            return jsonify({'response': '⚠️ API Key OpenAI belum dikonfigurasi. Silakan tambahkan OPENAI_API_KEY di environment variables Vercel, lalu Redeploy.'})
+        if not GROQ_API_KEY:
+            return jsonify({'response': '⚠️ API Key Groq belum dikonfigurasi. Silakan tambahkan GROQ_API_KEY di environment variables Vercel, lalu Redeploy.'})
 
         # Ambil data real-time
         dashboard_data = fetch_dashboard_data()
@@ -1061,7 +1060,7 @@ Rincian per provinsi:
 
 Gunakan data di atas untuk menjawab. Jawablah dengan singkat, ramah, dan langsung ke intinya. Gunakan format Markdown (bold, list) jika perlu. Jangan mengarang data yang tidak ada."""
         
-        # Cek Cache sebelum panggil OpenAI API
+        # Cek Cache sebelum panggil Groq API
         msg_key = user_message.lower().strip()
         now = datetime.now()
         if msg_key in ai_response_cache:
@@ -1070,43 +1069,42 @@ Gunakan data di atas untuk menjawab. Jawablah dengan singkat, ramah, dan langsun
                 print(f"DEBUG: Cache HIT untuk: {msg_key}")
                 return jsonify({'response': cached_reply})
 
-        # Panggil OpenAI Chat Completions API dengan retry
+        # Panggil Groq Chat Completions API dengan retry
         import time
         payload = {
-            "model": OPENAI_MODEL,
+            "model": GROQ_MODEL,
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_message}
             ],
-            "max_tokens": 1000,
             "temperature": 0.7
         }
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {OPENAI_API_KEY}"
+            "Authorization": f"Bearer {GROQ_API_KEY}"
         }
         
         answer = None
         status_code = 500
         
-        for attempt in range(3):  # Max 3 attempts
-            resp = requests.post(OPENAI_API_URL, headers=headers, json=payload, timeout=30)
+        for attempt in range(3):
+            resp = requests.post(GROQ_API_URL, headers=headers, json=payload, timeout=30)
             status_code = resp.status_code
             if status_code == 200:
                 answer = resp.json()['choices'][0]['message']['content']
                 break
             elif status_code == 429:
-                time.sleep(3)  # Backoff 3 detik jika rate limit
+                time.sleep(3)
                 continue
             else:
-                print(f"OpenAI API Error: {resp.status_code} - {resp.text}")
+                print(f"Groq API Error: {resp.status_code} - {resp.text}")
                 break
                 
         if status_code == 429 and not answer:
-            return jsonify({'response': '⏳ Nina sedang beristirahat sejenak karena batasan kuota API. Mohon tunggu 1 menit lalu coba lagi ya!'}), 429
+            return jsonify({'response': '⏳ Nina sedang beristirahat sejenak karena batasan rate limit Groq. Mohon tunggu beberapa saat lalu coba lagi ya!'}), 429
             
         if not answer:
-            return jsonify({'response': f'⚠️ Terjadi gangguan koneksi ke server AI (Error {status_code}). Coba lagi nanti.'}), 500
+            return jsonify({'response': f'⚠️ Terjadi gangguan koneksi ke server Groq (Error {status_code}). Coba lagi nanti.'}), 500
         
         # Simpan ke Cache agar pertanyaan sama tidak panggil API lagi
         ai_response_cache[msg_key] = (now, answer)
@@ -1117,9 +1115,9 @@ Gunakan data di atas untuk menjawab. Jawablah dengan singkat, ramah, dan langsun
         return jsonify({'response': f'⚠️ Error: {error_detail}'}), 500
 
 def ask_nina(user_message):
-    """Fungsi inti Nina AI dengan sistem Cache untuk menghemat kuota API (OpenAI GPT-4o)."""
-    if not OPENAI_API_KEY:
-        return '⚠️ API Key OpenAI belum dikonfigurasi.'
+    """Fungsi inti Nina AI dengan sistem Cache untuk menghemat kuota API (Groq AI)."""
+    if not GROQ_API_KEY:
+        return '⚠️ API Key Groq belum dikonfigurasi.'
     
     # 1. Cek Cache terlebih dahulu
     msg_key = user_message.lower().strip()
@@ -1153,24 +1151,23 @@ Gunakan data di atas untuk menjawab. Jawablah dengan singkat, ramah, dan langsun
 
         import time
         payload = {
-            "model": OPENAI_MODEL,
+            "model": GROQ_MODEL,
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_message}
             ],
-            "max_tokens": 1000,
             "temperature": 0.7
         }
         headers = {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {OPENAI_API_KEY}"
+            "Authorization": f"Bearer {GROQ_API_KEY}"
         }
         
         answer = None
         status_code = 500
         
         for attempt in range(3):
-            resp = requests.post(OPENAI_API_URL, headers=headers, json=payload, timeout=30)
+            resp = requests.post(GROQ_API_URL, headers=headers, json=payload, timeout=30)
             status_code = resp.status_code
             if status_code == 200:
                 answer = resp.json()['choices'][0]['message']['content']
@@ -1182,10 +1179,10 @@ Gunakan data di atas untuk menjawab. Jawablah dengan singkat, ramah, dan langsun
                 break
         
         if status_code == 429 and not answer:
-            return '⏳ Nina sedang istirahat sejenak karena batasan kuota API. Coba lagi dalam 1 menit ya!'
+            return '⏳ Nina sedang istirahat sejenak karena batasan rate limit Groq. Coba lagi dalam beberapa saat ya!'
             
         if not answer:
-            return f'⚠️ Gangguan koneksi ke server AI (Error {status_code}).'
+            return f'⚠️ Gangguan koneksi ke server Groq (Error {status_code}).'
         
         # 2. Simpan ke Cache jika berhasil
         ai_response_cache[msg_key] = (now, answer)
