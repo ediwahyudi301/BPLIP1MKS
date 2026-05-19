@@ -483,55 +483,54 @@
                                             { key: 'OLAH_LAHAN', label: 'Olah Lahan', isStatus: true }
                                         ];
 
+                                        const rowStyle = 'display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f1f5f9;';
+                                        const labelStyle = 'font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:0.05em;white-space:nowrap;';
+                                        const valStyle = 'font-size:11px;font-weight:600;color:#334155;text-align:right;';
+                                        const badgeGreen = 'font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;background:#dcfce7;color:#15803d;text-transform:uppercase;';
+                                        const badgeYellow = 'font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;background:#fef9c3;color:#a16207;text-transform:uppercase;';
+                                        const badgeRed = 'font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;background:#fee2e2;color:#b91c1c;text-transform:uppercase;';
+
                                         popupFields.forEach(field => {
                                             let val = combined[field.key];
                                             if (!val && field.altKey) val = combined[field.altKey];
                                             
                                             if (val && val !== 'nan' && val !== '-') {
-                                                let valueHtml = `<span class="text-[11px] font-semibold text-slate-700 text-right">${val}</span>`;
-                                                
+                                                let valueHtml;
                                                 if (field.isStatus) {
                                                     const vLower = val.toString().toLowerCase();
                                                     if (['sudah', 'selesai', 'done', 'ya', 'yes'].includes(vLower)) {
-                                                        valueHtml = `<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-green-100 text-green-700 text-right uppercase tracking-wide">Selesai</span>`;
+                                                        valueHtml = `<span style="${badgeGreen}">Selesai</span>`;
                                                     } else if (['proses', 'on progress', 'sedang berjalan', 'sedang proses'].includes(vLower)) {
-                                                        valueHtml = `<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-yellow-100 text-yellow-700 text-right uppercase tracking-wide">Proses</span>`;
+                                                        valueHtml = `<span style="${badgeYellow}">Proses</span>`;
                                                     } else {
-                                                        valueHtml = `<span class="text-[10px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-700 text-right uppercase tracking-wide">Belum</span>`;
+                                                        valueHtml = `<span style="${badgeRed}">Belum</span>`;
                                                     }
+                                                } else {
+                                                    valueHtml = `<span style="${valStyle}">${val}</span>`;
                                                 }
-                                                
-                                                itemsHtml += `
-                                                    <div class="flex justify-between items-center gap-4 py-1.5 border-b border-slate-100 last:border-0">
-                                                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-tight">${field.label}</span>
-                                                        ${valueHtml}
-                                                    </div>`;
+                                                itemsHtml += `<div style="${rowStyle}"><span style="${labelStyle}">${field.label}</span>${valueHtml}</div>`;
                                             }
                                         });
 
-                                        // Tambahkan field lain yang tidak ada di list urutan (opsional)
+                                        // Tambahkan field lain yang tidak ada di list urutan
                                         const handledKeys = new Set(popupFields.flatMap(f => [f.key, f.altKey]).filter(Boolean));
-                                        const hiddenCols = new Set(['KABUPATEN', 'LUAS', 'NO_PETAK', 'N_PETAK', 'WADMKD', 'PAKET']);
+                                        const hiddenCols = new Set(['KABUPATEN', 'LUAS', 'LUAS_Ha', 'NO_PETAK', 'N_PETAK', 'WADMKD', 'PAKET', 'KENDALA']);
                                         Object.entries(combined).forEach(([k, v]) => {
                                             if (v && v !== 'nan' && v !== '-' && !handledKeys.has(k) && !hiddenCols.has(k)) {
                                                 const label = k.replace(/_/g, ' ');
-                                                itemsHtml += `
-                                                    <div class="flex justify-between items-center gap-4 py-1.5 border-b border-slate-100 last:border-0">
-                                                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-tight">${label}</span>
-                                                        <span class="text-[11px] font-semibold text-slate-700 text-right">${v}</span>
-                                                    </div>`;
+                                                itemsHtml += `<div style="${rowStyle}"><span style="${labelStyle}">${label}</span><span style="${valStyle}">${v}</span></div>`;
                                             }
                                         });
 
                                         layer.bindPopup(`
-                                            <div class="min-w-[240px] p-1">
-                                                <div class="mb-3 pb-2 border-b border-slate-200">
-                                                    <h3 class="text-sm font-bold text-slate-800">${props.WADMKD || 'Detail Lokasi'}</h3>
-                                                    <p class="text-[10px] text-indigo-600 font-bold uppercase tracking-wider">${props.PAKET || ''}</p>
+                                            <div style="min-width:240px;padding:4px;font-family:sans-serif;">
+                                                <div style="margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #e2e8f0;">
+                                                    <div style="font-size:13px;font-weight:700;color:#1e293b;">${props.WADMKD || 'Detail Lokasi'}</div>
+                                                    <div style="font-size:10px;font-weight:700;color:#4f46e5;text-transform:uppercase;letter-spacing:0.08em;">${props.PAKET || ''}</div>
                                                 </div>
-                                                <div class="space-y-0.5">${itemsHtml}</div>
+                                                <div>${itemsHtml}</div>
                                             </div>
-                                        `, { maxWidth: 300, className: 'custom-popup' });
+                                        `, { maxWidth: 320, className: 'custom-popup' });
 
                                         layer.on({
                                             mouseover: (e) => { e.target.setStyle({ fillOpacity: 0.7, weight: 3 }); },
