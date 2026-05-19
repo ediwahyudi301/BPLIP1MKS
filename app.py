@@ -865,11 +865,11 @@ def get_kurva_s(paket_id):
 
 # Mapping paket_id ke URL CSV spreadsheet per-petak
 PETAK_SHEET_MAPPING = {
-    'sulsel_1': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS6fOtv-P_JhyRjTIMEpFsfwP2AvR0nsUho4Nf4cvfYnfu8-DjZlYRhFj8ZbTymumqUiwIWdve3qIsR/pub?gid=0&single=true&output=csv',
-    'sulsel_2': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS6fOtv-P_JhyRjTIMEpFsfwP2AvR0nsUho4Nf4cvfYnfu8-DjZlYRhFj8ZbTymumqUiwIWdve3qIsR/pub?gid=1908203472&single=true&output=csv',
-    'sulsel_3': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS6fOtv-P_JhyRjTIMEpFsfwP2AvR0nsUho4Nf4cvfYnfu8-DjZlYRhFj8ZbTymumqUiwIWdve3qIsR/pub?gid=1143415810&single=true&output=csv',
-    'sulsel_4': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS6fOtv-P_JhyRjTIMEpFsfwP2AvR0nsUho4Nf4cvfYnfu8-DjZlYRhFj8ZbTymumqUiwIWdve3qIsR/pub?gid=8251783&single=true&output=csv',
-    'sulsel_5': 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS6fOtv-P_JhyRjTIMEpFsfwP2AvR0nsUho4Nf4cvfYnfu8-DjZlYRhFj8ZbTymumqUiwIWdve3qIsR/pub?gid=1413155599&single=true&output=csv',
+    'sulsel_1': 'https://docs.google.com/spreadsheets/d/1wUr3d_GVK8Js57ZxIOroXOTdVIHQ9Z6iGTzJN0iYdG8/export?format=csv&gid=0',
+    'sulsel_2': 'https://docs.google.com/spreadsheets/d/1wUr3d_GVK8Js57ZxIOroXOTdVIHQ9Z6iGTzJN0iYdG8/export?format=csv&gid=1908203472',
+    'sulsel_3': 'https://docs.google.com/spreadsheets/d/1wUr3d_GVK8Js57ZxIOroXOTdVIHQ9Z6iGTzJN0iYdG8/export?format=csv&gid=1143415810',
+    'sulsel_4': 'https://docs.google.com/spreadsheets/d/1wUr3d_GVK8Js57ZxIOroXOTdVIHQ9Z6iGTzJN0iYdG8/export?format=csv&gid=8251783',
+    'sulsel_5': 'https://docs.google.com/spreadsheets/d/1wUr3d_GVK8Js57ZxIOroXOTdVIHQ9Z6iGTzJN0iYdG8/export?format=csv&gid=1413155599',
     # Mapping untuk Sulawesi Tengah (Ganti URL dengan link CSV spreadsheet yang sesuai)
     'sulteng_1': '',
     'sulteng_2': '',
@@ -899,13 +899,15 @@ def api_petak_data_all():
                     key_col = 'NO_PETAK' if 'NO_PETAK' in df.columns else ('N_PETAK' if 'N_PETAK' in df.columns else None)
                     if key_col:
                         # Ambil kolom status
-                        status_cols = ['LAND_CLEARING', 'LAND_LEVELLING', 'OLAH_LAHAN']
+                        status_cols = ['LAND CLEARING', 'LAND LEVELLING', 'OLAH LAHAN', 'LAND_CLEARING', 'LAND_LEVELLING', 'OLAH_LAHAN']
                         available_status = [c for c in status_cols if c in df.columns]
                         for _, row in df.iterrows():
                             petak_id = str(row[key_col]).strip()
                             if petak_id:
                                 d = {}
-                                for c in available_status: d[c] = str(row[c]).strip()
+                                for c in available_status:
+                                    normalized_key = c.replace(' ', '_')
+                                    d[normalized_key] = str(row[c]).strip()
                                 all_data[petak_id] = d
             except:
                 continue
@@ -934,18 +936,21 @@ def api_petak_data(paket_id):
         # Bersihkan nama kolom
         df.columns = [c.strip() for c in df.columns]
 
-        if 'NO_PETAK' not in df.columns:
+        if 'NO_PETAK' not in df.columns and 'N_PETAK' not in df.columns:
             return jsonify({'error': 'Kolom NO_PETAK tidak ditemukan di spreadsheet'}), 400
 
         # Kirim semua kolom dari spreadsheet agar bisa membatalkan data GeoJSON yang "kotor"
         result = {}
         for _, row in df.iterrows():
-            petak = str(row['NO_PETAK']).strip()
+            petak = str(row.get('NO_PETAK', row.get('N_PETAK', ''))).strip()
             if not petak or petak.lower() == 'nan':
                 continue
-            # Ambil semua kolom yang ada di baris ini
-            result[petak] = {col: (str(row[col]).strip() if pd.notna(row[col]) else '-')
-                             for col in df.columns}
+            # Ambil semua kolom yang ada di baris ini dan ganti spasi dengan underscore
+            d = {}
+            for col in df.columns:
+                key = col.replace(' ', '_')
+                d[key] = str(row[col]).strip() if pd.notna(row[col]) else '-'
+            result[petak] = d
 
         return jsonify(result)
 
